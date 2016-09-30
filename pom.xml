@@ -17,7 +17,7 @@
     <name>Siddhi Extensions</name>
 
     <modules>
-        <module>top-k</module>
+        <module>top-k-bottom-k</module>
     </modules>
 
     <dependencyManagement>

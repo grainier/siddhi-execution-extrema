@@ -10,9 +10,9 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>top-k</artifactId>
+    <artifactId>top-k-bottom-k</artifactId>
     <packaging>bundle</packaging>
-    <name>Siddhi Extension - Top K</name>
+    <name>Siddhi Extension - Top K and Bottom K</name>
 
     <dependencies>
         <dependency>
