@@ -30,8 +30,8 @@ import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 
-public class TopKLengthBatchStreamProcessorExtensionTestCase {
-    static final Logger log = Logger.getLogger(TopKLengthBatchStreamProcessorExtensionTestCase.class);
+public class BottomKTimeBatchStreamProcessorExtensionTestCase {
+    static final Logger log = Logger.getLogger(BottomKTimeBatchStreamProcessorExtensionTestCase.class);
     private volatile int count;
     private volatile boolean eventArrived;
 
@@ -47,7 +47,7 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
-        String query = ("@info(name = 'query1') from inputStream#custom:bottomKLengthBatch(item, 6, 3)  " +
+        String query = ("@info(name = 'query1') from inputStream#custom:topKTimeBatch(item, 1 sec, 3)  " +
                 "insert into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
@@ -59,15 +59,15 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
                 for (Event event : inEvents) {
                     if (count == 5) {
                         // Checking the if the topK elements are considered
-                        Assert.assertEquals("item3", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item1", event.getData(2));
+                        Assert.assertEquals(3L, event.getData(3));
                         Assert.assertEquals("item2", event.getData(4));
                         Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item1", event.getData(6));
-                        Assert.assertEquals(3L, event.getData(7));
+                        Assert.assertEquals("item3", event.getData(6));
+                        Assert.assertEquals(1L, event.getData(7));
                     } else if (count == 6) {
                         // Checking if the window had been reset
-                        Assert.assertEquals("item3", event.getData(2));
+                        Assert.assertEquals("item1", event.getData(2));
                         Assert.assertEquals(1L, event.getData(3));
                         Assert.assertNull(event.getData(4));
                         Assert.assertNull(event.getData(5));
@@ -89,7 +89,8 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item2", 25});
         inputHandler.send(new Object[]{"item3", 64});
         // Length Window reset
-        inputHandler.send(new Object[]{"item3", 10});
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10});
 
         Thread.sleep(1000);
         Assert.assertEquals(7, count);

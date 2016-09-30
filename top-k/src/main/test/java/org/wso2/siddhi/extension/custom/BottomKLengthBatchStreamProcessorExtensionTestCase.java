@@ -30,8 +30,8 @@ import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 
-public class TopKLengthBatchStreamProcessorExtensionTestCase {
-    static final Logger log = Logger.getLogger(TopKLengthBatchStreamProcessorExtensionTestCase.class);
+public class BottomKLengthBatchStreamProcessorExtensionTestCase {
+    static final Logger log = Logger.getLogger(BottomKLengthBatchStreamProcessorExtensionTestCase.class);
     private volatile int count;
     private volatile boolean eventArrived;
 
