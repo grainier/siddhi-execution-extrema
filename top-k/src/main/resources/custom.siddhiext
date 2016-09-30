@@ -17,3 +17,4 @@
 #
 
 topKLengthBatch=org.wso2.siddhi.extension.custom.TopKLengthBatchStreamProcessorExtension
+topKTimeBatch=org.wso2.siddhi.extension.custom.TopKTimeBatchStreamProcessorExtension

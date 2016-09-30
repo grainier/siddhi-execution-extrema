@@ -30,7 +30,9 @@ import org.wso2.siddhi.core.executor.ConstantExpressionExecutor;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
+import org.wso2.siddhi.core.query.processor.SchedulingProcessor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
+import org.wso2.siddhi.core.util.Scheduler;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
@@ -38,36 +40,36 @@ import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TopKLengthBatchStreamProcessorExtension extends StreamProcessor {
-    private int windowLength;
+public class TopKTimeBatchStreamProcessorExtension extends StreamProcessor implements SchedulingProcessor {
+    private long windowTime;
     private int querySize;
-    private int count;
     private VariableExpressionExecutor attrVariableExpressionExecutor;
+    private Scheduler scheduler;
+    private ExecutionPlanContext executionPlanContext;
     private StreamSummary<Object> topKFinder;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
                                    ExecutionPlanContext executionPlanContext) {
         if (attributeExpressionExecutors.length == 3) {
-            count = 0;
+            this.executionPlanContext = executionPlanContext;
             attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
         } else {
-            throw new ExecutionPlanValidationException("3 arguments should be passed to TopKLengthBatchWindowProcessor, " +
+            throw new ExecutionPlanValidationException("3 arguments should be passed to TopKTimeBatchWindowProcessor, " +
                     "but found " + attributeExpressionExecutors.length);
         }
 
-        // Checking the window length parameter
+        // Checking the window time parameter
         if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
             Attribute.Type attributeType = attributeExpressionExecutors[1].getReturnType();
-            if (attributeType == Attribute.Type.INT) {
-                windowLength = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
-                topKFinder = new StreamSummary<Object>(windowLength);
+            if (attributeType == Attribute.Type.LONG) {
+                windowTime = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
             } else {
-                throw new ExecutionPlanValidationException("Window length parameter for TopKLengthBatchWindowProcessor " +
-                        "should be int. but found " + attributeType);
+                throw new ExecutionPlanValidationException("Window time parameter for TopKTimeBatchWindowProcessor " +
+                        "should be long. but found " + attributeType);
             }
         } else {
-            throw new ExecutionPlanValidationException("Window length parameter for TopKLengthBatchWindowProcessor " +
+            throw new ExecutionPlanValidationException("Window time parameter for TopKTimeBatchWindowProcessor " +
                     "should be a constant. but found a dynamic attribute " +
                     attributeExpressionExecutors[1].getClass().getCanonicalName());
         }
@@ -78,11 +80,11 @@ public class TopKLengthBatchStreamProcessorExtension extends StreamProcessor {
             if (attributeType == Attribute.Type.INT) {
                 querySize = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue();
             } else {
-                throw new ExecutionPlanValidationException("Query size parameter for TopKLengthBatchWindowProcessor " +
+                throw new ExecutionPlanValidationException("Query size parameter for TopKTimeBatchWindowProcessor " +
                         "should be int. but found " + attributeType);
             }
         } else {
-            throw new ExecutionPlanValidationException("Query size parameter for TopKLengthBatchWindowProcessor " +
+            throw new ExecutionPlanValidationException("Query size parameter for TopKTimeBatchWindowProcessor " +
                     "should be a constant. but found a dynamic attribute " +
                     attributeExpressionExecutors[2].getClass().getCanonicalName());
         }
@@ -104,14 +106,14 @@ public class TopKLengthBatchStreamProcessorExtension extends StreamProcessor {
                 StreamEvent streamEvent = streamEventChunk.next();
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
+                if (streamEvent.getType() == ComplexEvent.Type.TIMER ||
+                        topKFinder == null) {
+                    long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
+                    topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
+                    scheduler.notifyAt(currentTime + windowTime);
+                }
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
-                    if (count == windowLength) {
-                        topKFinder = new StreamSummary<Object>(windowLength);
-                        count = 0;
-                    }
-
                     topKFinder.offer(attrVariableExpressionExecutor.execute(clonedStreamEvent));
-                    count++;
 
                     List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
                     Object[] outputStreamEventData = new Object[2 * querySize];
@@ -144,7 +146,7 @@ public class TopKLengthBatchStreamProcessorExtension extends StreamProcessor {
     @Override
     public Object[] currentState() {
         synchronized (this) {
-            return new Object[]{topKFinder, windowLength, querySize, count};
+            return new Object[]{topKFinder, windowTime, querySize};
         }
     }
 
@@ -152,9 +154,18 @@ public class TopKLengthBatchStreamProcessorExtension extends StreamProcessor {
     public void restoreState(Object[] state) {
         synchronized (this) {
             topKFinder = (StreamSummary<Object>) state[0];
-            windowLength = (Integer) state[1];
+            windowTime = (Long) state[1];
             querySize = (Integer) state[2];
-            count = (Integer) state[3];
         }
+    }
+
+    @Override
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
+    }
+
+    @Override
+    public Scheduler getScheduler() {
+        return scheduler;
     }
 }
