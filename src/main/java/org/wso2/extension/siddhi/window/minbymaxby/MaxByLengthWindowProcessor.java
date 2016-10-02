@@ -8,18 +8,18 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 
 /**
- * Created by mathuriga on 29/09/16.
+ * Created by mathuriga on 01/10/16.
  */
-public class MaxByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
-    String functionType = "MAX";
+public class MaxByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
+    String functionType;
 
-    public MaxByLengthBatchWindowProcessor() {
-        super.functionType = this.functionType;
+
+    public MaxByLengthWindowProcessor() {
+        this.functionType = "MAX";
     }
 
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-
-        super.init(expressionExecutors, executionPlanContext);
+        super.init(expressionExecutors, executionPlanContext, functionType);
     }
 
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {

@@ -1,13 +1,11 @@
 package org.wso2.extension.siddhi.window.minbymaxby;
 
-import junit.framework.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
-import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
@@ -18,13 +16,12 @@ import java.util.List;
 import static org.junit.Assert.assertArrayEquals;
 
 /**
- * Created by mathuriga on 28/09/16.
+ * Created by mathuriga on 01/10/16.
  */
-public class MaxByLengthBatchWindowProcessorTestCase {
-    private static final Logger log = Logger.getLogger(MaxByLengthBatchWindowProcessorTestCase.class);
-
-    private int count;
-
+public class MaxByLengthWindowProcessorTestCase {
+    private static final Logger log = Logger.getLogger(MaxByLengthWindowProcessorTestCase.class);
+    int count;
+    List<Object> results = new ArrayList<Object>();
 
     @Before
     public void init() {
@@ -33,14 +30,18 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
 
     @Test
-    public void testMaxByWindowForLengthBatch() throws InterruptedException {
-        log.info("Testing maxByLengthBatchWindowProcessor with no of events equal to window size for float parameter");
-
+    public void testMaxByLengthWindowProcessor1() throws InterruptedException {
+        log.info("Testing maxByLengthWindowProcessor with no of events less than window size for float type parameter");
         SiddhiManager siddhiManager = new SiddhiManager();
+
+        siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLengthBatch(price, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
+        results.add(new Object[]{"IBM", 700f, 14});
+        results.add(new Object[]{"IBM", 700f, 14});
+        results.add(new Object[]{"WSO2", 790f, 1});
         try {
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
@@ -48,20 +49,19 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 public void receive(Event[] events) {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
-                    Object[] results = new Object[]{"et", 900f, 1};
-                    assertArrayEquals(results, events[0].getData());
 
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
                 }
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
             inputHandler.send(new Object[]{"IBM", 700f, 14});
-            inputHandler.send(new Object[]{"IBM", 40.5f, 2});
-            inputHandler.send(new Object[]{"et", 900f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
-
+            inputHandler.send(new Object[]{"IBM", 20.5f, 2});
+            inputHandler.send(new Object[]{"WSO2", 790f, 1});
             Thread.sleep(1000);
-
         } finally {
             executionPlanRuntime.shutdown();
         }
@@ -69,100 +69,93 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
 
     @Test
-    public void testMaxByWindowForLengthBatch2() throws InterruptedException {
-        log.info("Testing maxByLengthBatchWindowProcessor with no of events greater than window size for int parameter");
+    public void testMaxByLengthWindowProcessor2() throws InterruptedException {
+        log.info("Testing maxByLengthWindowProcessor with no of events equal to window size for integer type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLengthBatch(volume, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLength(volume, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         try {
             final List<Object> results = new ArrayList<Object>();
-            results.add(new Object[]{"IBM", 700f, 142});
-            results.add(new Object[]{"dg", 60.5f, 24});
-
+            results.add(new Object[]{"IBM", 700f, 14});
+            results.add(new Object[]{"IBM", 700f, 14});
+            results.add(new Object[]{"IBM", 700f, 20});
+            results.add(new Object[]{"ZZZ", 60.5f, 82});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
                 @Override
                 public void receive(Event[] events) {
-
                     System.out.print("output event: ");
                     EventPrinter.print(events);
                     for (Event event : events) {
                         assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
                     }
-
                 }
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
             inputHandler.send(new Object[]{"IBM", 700f, 14});
-            inputHandler.send(new Object[]{"IBM", 60.5f, 2});
-            inputHandler.send(new Object[]{"IBM", 700f, 142});
-            inputHandler.send(new Object[]{"IBM", 60.5f, 21});
-            inputHandler.send(new Object[]{"et", 700f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
-            inputHandler.send(new Object[]{"IBM", 60.5f, 21});
-            inputHandler.send(new Object[]{"et", 700f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
-
+            inputHandler.send(new Object[]{"IBM", 60.5f, 12});
+            inputHandler.send(new Object[]{"IBM", 700f, 20});
+            inputHandler.send(new Object[]{"ZZZ", 60.5f, 82});
             Thread.sleep(1000);
-
-
         } finally {
             executionPlanRuntime.shutdown();
         }
     }
 
+
     @Test
-    public void testMaxByWindowForLengthBatch3() throws InterruptedException {
-        log.info("Testing maxByLengthBatchWindowProcessor with no of events greater than window size for String parameter");
+    public void testMaxByLengthWindowProcessor3() throws InterruptedException {
+        log.info("Testing maxByLengthWindowProcessor with no of events greater than window size for String type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLengthBatch(symbol, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLength(symbol, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         try {
             final List<Object> results = new ArrayList<Object>();
-            results.add(new Object[]{"XXX", 700f, 14});
-            results.add(new Object[]{"YTX", 60.5f, 24});
+            results.add(new Object[]{"bbc", 700f, 14});
+            results.add(new Object[]{"bbc", 700f, 14});
+            results.add(new Object[]{"xxx", 700f, 2});
+            results.add(new Object[]{"xxx", 700f, 2});
+            results.add(new Object[]{"xxx", 700f, 2});
+            results.add(new Object[]{"zzz", 60.5f, 12});
+            results.add(new Object[]{"zzz", 60.5f, 12});
+            results.add(new Object[]{"zzz", 60.5f, 12});
+            results.add(new Object[]{"zzz", 60.5f, 12});
+            results.add(new Object[]{"rye", 60.5f, 82});
 
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
                 @Override
                 public void receive(Event[] events) {
-
                     System.out.print("output event: ");
                     EventPrinter.print(events);
+
                     for (Event event : events) {
                         assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
                     }
-
                 }
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
-            inputHandler.send(new Object[]{"XXX", 700f, 14});
-            inputHandler.send(new Object[]{"ABC", 60.5f, 2});
-            inputHandler.send(new Object[]{"AAA", 700f, 142});
-            inputHandler.send(new Object[]{"ACD", 60.5f, 21});
-            inputHandler.send(new Object[]{"RTE", 700f, 1});
-            inputHandler.send(new Object[]{"YTX", 60.5f, 24});
-            inputHandler.send(new Object[]{"DGF", 60.5f, 21});
-            inputHandler.send(new Object[]{"ETR", 700f, 1});
-            inputHandler.send(new Object[]{"DXD", 60.5f, 24});
-
+            inputHandler.send(new Object[]{"bbc", 700f, 14});
+            inputHandler.send(new Object[]{"bab", 60.5f, 12});
+            inputHandler.send(new Object[]{"xxx", 700f, 2});
+            inputHandler.send(new Object[]{"ddd", 60.5f, 82});
+            inputHandler.send(new Object[]{"abc", 700f, 84});
+            inputHandler.send(new Object[]{"zzz", 60.5f, 12});
+            inputHandler.send(new Object[]{"aaa", 700f, 2});
+            inputHandler.send(new Object[]{"dhh", 60.5f, 82});
+            inputHandler.send(new Object[]{"drg", 700f, 2});
+            inputHandler.send(new Object[]{"rye", 60.5f, 82});
             Thread.sleep(1000);
-
-
         } finally {
             executionPlanRuntime.shutdown();
         }
     }
-
-
 }

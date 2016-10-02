@@ -19,3 +19,4 @@
 minByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.MinByLengthBatchWindowProcessor
 maxByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.MaxByLengthBatchWindowProcessor
 minByLength=org.wso2.extension.siddhi.window.minbymaxby.MinByLengthWindowProcessor
+maxByLength=org.wso2.extension.siddhi.window.minbymaxby.MaxByLengthWindowProcessor

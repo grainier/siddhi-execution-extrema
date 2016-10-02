@@ -11,18 +11,19 @@ import org.wso2.siddhi.core.query.processor.Processor;
  * Created by mathuriga on 29/09/16.
  */
 public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
-    String functionType;
+    String functionType = "MIN";
 
 
     public MinByLengthBatchWindowProcessor() {
-        this.functionType = "MIN";
+        super.functionType = functionType;
+
     }
 
-    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext){
-        super.init(expressionExecutors,executionPlanContext,functionType);
+    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+        super.init(expressionExecutors, executionPlanContext);
     }
 
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner){
+    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         super.process(streamEventChunk, nextProcessor, streamEventCloner);
     }
 

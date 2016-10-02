@@ -18,11 +18,11 @@ public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor 
         this.functionType = "MIN";
     }
 
-    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext){
-        super.init(expressionExecutors,executionPlanContext,functionType);
+    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+        super.init(expressionExecutors, executionPlanContext, functionType);
     }
 
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner){
+    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         super.process(streamEventChunk, nextProcessor, streamEventCloner);
     }
 }
