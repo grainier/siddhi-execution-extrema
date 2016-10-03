@@ -48,6 +48,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     private ExecutionPlanContext executionPlanContext;
     private StreamSummary<Object> topKFinder;
     private long startTime = 0;
+    private StreamEvent lastStreamEvent;
     protected boolean isTopK;
 
     @Override
@@ -58,6 +59,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                 attributeExpressionExecutors.length == 4) {
             this.executionPlanContext = executionPlanContext;
             attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
+            lastStreamEvent = null;
         } else {
             throw new ExecutionPlanValidationException("3 arguments (4 arguments if start time is also specified) should be " +
                     "passed to " + namePrefix + "KTimeBatchWindowProcessor, but found " + attributeExpressionExecutors.length);
@@ -120,6 +122,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor processor,
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
+        ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             if (currentTime > startTime) {
@@ -128,19 +131,20 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                     StreamEvent streamEvent = streamEventChunk.next();
                     StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
-                    if (streamEvent.getType() == ComplexEvent.Type.TIMER ||
-                            topKFinder == null) {
+                    if (topKFinder == null) {
                         topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
                         scheduler.notifyAt(currentTime + windowTime);
                     }
                     if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
+                        lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
                         topKFinder.offer(
                                 attrVariableExpressionExecutor.execute(clonedStreamEvent),
                                 frequencyCountMultiplier
                         );
-
-                        List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
+                    }
+                    if (streamEvent.getType() == ComplexEvent.Type.TIMER && topKFinder != null) {
                         Object[] outputStreamEventData = new Object[2 * querySize];
+                        List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
                         int i = 0;
                         while (i < topKCounters.size()) {
                             Counter<Object> topKCounter = topKCounters.get(i);
@@ -148,14 +152,20 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                             outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
                             i++;
                         }
+                        complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
+                        outputStreamEventChunk.add(lastStreamEvent);
 
-                        complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
+                        // Resetting window
+                        topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
+                        scheduler.notifyAt(currentTime + windowTime);
                     }
                 }
             }
         }
 
-        nextProcessor.process(streamEventChunk);
+        if (outputStreamEventChunk.getFirst() != null) {
+            nextProcessor.process(outputStreamEventChunk);
+        }
     }
 
     @Override

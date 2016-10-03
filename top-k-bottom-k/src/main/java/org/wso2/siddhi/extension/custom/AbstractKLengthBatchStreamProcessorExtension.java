@@ -101,6 +101,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor processor,
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
+        boolean sendEvents = false;
         synchronized (this) {
             int frequencyCountMultiplier = (isTopK ? 1 : -1);
             while (streamEventChunk.hasNext()) {
@@ -108,33 +109,38 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
-                    if (count == windowLength) {
-                        topKFinder = new StreamSummary<Object>(windowLength);
-                        count = 0;
-                    }
-
+                    count++;
+                    sendEvents = count == windowLength;
                     topKFinder.offer(
                             attrVariableExpressionExecutor.execute(clonedStreamEvent),
                             frequencyCountMultiplier
                     );
-                    count++;
 
-                    List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
-                    Object[] outputStreamEventData = new Object[2 * querySize];
-                    int i = 0;
-                    while (i < topKCounters.size()) {
-                        Counter<Object> topKCounter = topKCounters.get(i);
-                        outputStreamEventData[2 * i] = topKCounter.getItem();
-                        outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
-                        i++;
+                    if (sendEvents) {
+                        List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
+                        Object[] outputStreamEventData = new Object[2 * querySize];
+                        int i = 0;
+                        while (i < topKCounters.size()) {
+                            Counter<Object> topKCounter = topKCounters.get(i);
+                            outputStreamEventData[2 * i] = topKCounter.getItem();
+                            outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
+                            i++;
+                        }
+
+                        complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
                     }
+                }
 
-                    complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
+                if (count == windowLength) {
+                    topKFinder = new StreamSummary<Object>(windowLength);
+                    count = 0;
                 }
             }
         }
 
-        nextProcessor.process(streamEventChunk);
+        if (sendEvents) {
+            nextProcessor.process(streamEventChunk);
+        }
     }
 
     @Override

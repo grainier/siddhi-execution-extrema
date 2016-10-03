@@ -57,7 +57,7 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
                 EventPrinter.print(timeStamp, inEvents, removeEvents);
                 eventArrived = true;
                 for (Event event : inEvents) {
-                    if (count == 5) {
+                    if (count == 0) {
                         // Checking the if the topK elements are considered
                         Assert.assertEquals("item1", event.getData(2));
                         Assert.assertEquals(3L, event.getData(3));
@@ -65,14 +65,14 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals(2L, event.getData(5));
                         Assert.assertEquals("item3", event.getData(6));
                         Assert.assertEquals(1L, event.getData(7));
-                    } else if (count == 6) {
+                    } else if (count == 1) {
                         // Checking if the window had been reset
-                        Assert.assertEquals("item3", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertNull(event.getData(4));
-                        Assert.assertNull(event.getData(5));
-                        Assert.assertNull(event.getData(6));
-                        Assert.assertNull(event.getData(7));
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertEquals("item5", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item6", event.getData(6));
+                        Assert.assertEquals(2L, event.getData(7));
                     }
                     count++;
                 }
@@ -89,10 +89,15 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item2", 25});
         inputHandler.send(new Object[]{"item3", 64});
         // Length Window reset
-        inputHandler.send(new Object[]{"item3", 10});
+        inputHandler.send(new Object[]{"item4", 65});
+        inputHandler.send(new Object[]{"item5", 45});
+        inputHandler.send(new Object[]{"item6", 34});
+        inputHandler.send(new Object[]{"item4", 76});
+        inputHandler.send(new Object[]{"item5", 93});
+        inputHandler.send(new Object[]{"item6", 23});
 
         Thread.sleep(1000);
-        Assert.assertEquals(7, count);
+        Assert.assertEquals(2, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
