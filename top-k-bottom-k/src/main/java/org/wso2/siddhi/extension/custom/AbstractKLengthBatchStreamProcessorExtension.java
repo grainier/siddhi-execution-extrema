@@ -41,10 +41,15 @@ import java.util.List;
 public abstract class AbstractKLengthBatchStreamProcessorExtension extends StreamProcessor {
     private int windowLength;
     private int querySize;
+    protected boolean isTopK;
+
     private int count;
     private VariableExpressionExecutor attrVariableExpressionExecutor;
     private StreamSummary<Object> topKFinder;
-    protected boolean isTopK;
+
+    private StreamEvent lastStreamEvent = null;
+    private StreamEvent resetEvent = null;
+    private StreamEvent expiredStreamEvent = null;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
@@ -101,45 +106,63 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor processor,
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
-        boolean sendEvents = false;
+        ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
+            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             int frequencyCountMultiplier = (isTopK ? 1 : -1);
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
+                // New current event tasks
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                     count++;
-                    sendEvents = count == windowLength;
+                    lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
                     topKFinder.offer(
                             attrVariableExpressionExecutor.execute(clonedStreamEvent),
                             frequencyCountMultiplier
                     );
-
-                    if (sendEvents) {
-                        List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
-                        Object[] outputStreamEventData = new Object[2 * querySize];
-                        int i = 0;
-                        while (i < topKCounters.size()) {
-                            Counter<Object> topKCounter = topKCounters.get(i);
-                            outputStreamEventData[2 * i] = topKCounter.getItem();
-                            outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
-                            i++;
-                        }
-
-                        complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
-                    }
                 }
 
+                // End of window tasks
                 if (count == windowLength) {
+                    outputStreamEventChunk.add(resetEvent);
+                    resetEvent = null;
+
+                    List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
+                    Object[] outputStreamEventData = new Object[2 * querySize];
+                    int i = 0;
+                    while (i < topKCounters.size()) {
+                        Counter<Object> topKCounter = topKCounters.get(i);
+                        outputStreamEventData[2 * i] = topKCounter.getItem();
+                        outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
+                        i++;
+                    }
+                    complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
+                    outputStreamEventChunk.add(lastStreamEvent);
+
+                    if (outputExpectsExpiredEvents) {
+                        if (expiredStreamEvent != null) {
+                            expiredStreamEvent.setTimestamp(currentTime);
+                            outputStreamEventChunk.add(expiredStreamEvent);
+                        }
+                        expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                        expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                    }
+
                     topKFinder = new StreamSummary<Object>(windowLength);
                     count = 0;
                 }
             }
+
+            if (resetEvent == null) {
+                resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
+                resetEvent.setType(ComplexEvent.Type.RESET);
+            }
         }
 
-        if (sendEvents) {
-            nextProcessor.process(streamEventChunk);
+        if (outputStreamEventChunk.getFirst() != null) {
+            nextProcessor.process(outputStreamEventChunk);
         }
     }
 
@@ -156,7 +179,11 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     @Override
     public Object[] currentState() {
         synchronized (this) {
-            return new Object[]{topKFinder, windowLength, querySize, count};
+            if (outputExpectsExpiredEvents) {
+                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent, expiredStreamEvent};
+            } else {
+                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent};
+            }
         }
     }
 
@@ -167,6 +194,12 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
             windowLength = (Integer) state[1];
             querySize = (Integer) state[2];
             count = (Integer) state[3];
+
+            lastStreamEvent = (StreamEvent) state[4];
+            resetEvent = (StreamEvent) state[5];
+            if (state.length == 7) {
+                expiredStreamEvent = (StreamEvent) state[6];
+            }
         }
     }
 }

@@ -90,8 +90,8 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64});
         // Time Window reset
         Thread.sleep(1100);
-        inputHandler.send(new Object[]{"item4", 65});
-        inputHandler.send(new Object[]{"item4", 23});
+        inputHandler.send(new Object[]{"item4", 14});
+        inputHandler.send(new Object[]{"item4", 73});
 
         Thread.sleep(1000);
         Assert.assertEquals(2, count);
@@ -153,8 +153,8 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64});
         // Time Window reset
         Thread.sleep(1100);
-        inputHandler.send(new Object[]{"item4", 65});
-        inputHandler.send(new Object[]{"item4", 23});
+        inputHandler.send(new Object[]{"item4", 75});
+        inputHandler.send(new Object[]{"item4", 34});
 
         Thread.sleep(1000);
         Assert.assertEquals(2, count);

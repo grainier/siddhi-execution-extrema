@@ -43,13 +43,17 @@ import java.util.List;
 public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamProcessor implements SchedulingProcessor {
     private long windowTime;
     private int querySize;
+    private long startTime = 0L;
+    protected boolean isTopK;
+
+    private StreamSummary<Object> topKFinder;
     private VariableExpressionExecutor attrVariableExpressionExecutor;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
-    private StreamSummary<Object> topKFinder;
-    private long startTime = 0;
-    private StreamEvent lastStreamEvent;
-    protected boolean isTopK;
+
+    private StreamEvent lastStreamEvent = null;
+    private StreamEvent expiredStreamEvent = null;
+    private StreamEvent resetEvent = null;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
@@ -59,7 +63,6 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                 attributeExpressionExecutors.length == 4) {
             this.executionPlanContext = executionPlanContext;
             attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-            lastStreamEvent = null;
         } else {
             throw new ExecutionPlanValidationException("3 arguments (4 arguments if start time is also specified) should be " +
                     "passed to " + namePrefix + "KTimeBatchWindowProcessor, but found " + attributeExpressionExecutors.length);
@@ -131,10 +134,13 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                     StreamEvent streamEvent = streamEventChunk.next();
                     StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
+                    // Starting
                     if (topKFinder == null) {
                         topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
                         scheduler.notifyAt(currentTime + windowTime);
                     }
+
+                    // New current event tasks
                     if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                         lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
                         topKFinder.offer(
@@ -142,7 +148,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                                 frequencyCountMultiplier
                         );
                     }
+
+                    // End of window tasks
                     if (streamEvent.getType() == ComplexEvent.Type.TIMER && topKFinder != null) {
+                        outputStreamEventChunk.add(resetEvent);
+                        resetEvent = null;
+
                         Object[] outputStreamEventData = new Object[2 * querySize];
                         List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
                         int i = 0;
@@ -155,10 +166,24 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                         complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
                         outputStreamEventChunk.add(lastStreamEvent);
 
+                        if (outputExpectsExpiredEvents) {
+                            if (expiredStreamEvent != null) {
+                                expiredStreamEvent.setTimestamp(currentTime);
+                                outputStreamEventChunk.add(expiredStreamEvent);
+                            }
+                            expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                            expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                        }
+
                         // Resetting window
                         topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
                         scheduler.notifyAt(currentTime + windowTime);
                     }
+                }
+
+                if (resetEvent == null) {
+                    resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
+                    resetEvent.setType(ComplexEvent.Type.RESET);
                 }
             }
         }
@@ -181,7 +206,11 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     @Override
     public Object[] currentState() {
         synchronized (this) {
-            return new Object[]{topKFinder, windowTime, querySize, startTime};
+            if (outputExpectsExpiredEvents) {
+                return new Object[]{topKFinder, windowTime, querySize, startTime, lastStreamEvent, resetEvent, expiredStreamEvent};
+            } else {
+                return new Object[]{topKFinder, windowTime, querySize, startTime, lastStreamEvent, resetEvent};
+            }
         }
     }
 
@@ -192,6 +221,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
             windowTime = (Long) state[1];
             querySize = (Integer) state[2];
             startTime = (Long) state[3];
+
+            lastStreamEvent = (StreamEvent) state[4];
+            resetEvent = (StreamEvent) state[5];
+            if (state.length == 7) {
+                expiredStreamEvent = (StreamEvent) state[6];
+            }
         }
     }
 

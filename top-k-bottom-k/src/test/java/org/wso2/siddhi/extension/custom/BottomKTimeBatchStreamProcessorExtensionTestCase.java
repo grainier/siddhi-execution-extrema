@@ -43,7 +43,7 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
 
     @Test
     public void testBottomKTimeBatchStreamProcessorExtensionWithoutStartTime() throws InterruptedException {
-        log.info("BottomKTimeBatchStreamProcessor TestCase");
+        log.info("BottomKTimeBatchStreamProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
@@ -90,8 +90,8 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64});
         // Time Window reset
         Thread.sleep(1100);
-        inputHandler.send(new Object[]{"item4", 35});
-        inputHandler.send(new Object[]{"item4", 23});
+        inputHandler.send(new Object[]{"item4", 75});
+        inputHandler.send(new Object[]{"item4", 13});
 
         Thread.sleep(1000);
         Assert.assertEquals(2, count);
@@ -101,7 +101,7 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
 
     @Test
     public void testBottomKTimeBatchStreamProcessorExtensionWithStartTime() throws InterruptedException {
-        log.info("BottomKTimeBatchStreamProcessor TestCase");
+        log.info("BottomKTimeBatchStreamProcessor TestCase 2");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
