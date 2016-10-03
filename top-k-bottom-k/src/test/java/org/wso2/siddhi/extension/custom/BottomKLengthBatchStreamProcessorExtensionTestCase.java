@@ -42,7 +42,7 @@ public class BottomKLengthBatchStreamProcessorExtensionTestCase {
     }
 
     @Test
-    public void testTopKLengthBatchStreamProcessorExtensionExtension() throws InterruptedException {
+    public void testTopKLengthBatchStreamProcessorExtension() throws InterruptedException {
         log.info("TopKLengthBatchStreamProcessor TestCase");
         SiddhiManager siddhiManager = new SiddhiManager();
 

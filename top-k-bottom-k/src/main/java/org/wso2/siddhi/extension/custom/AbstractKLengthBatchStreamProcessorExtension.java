@@ -66,7 +66,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 topKFinder = new StreamSummary<Object>(windowLength);
             } else {
                 throw new ExecutionPlanValidationException("Window length parameter for " +
-                        namePrefix + "KLengthBatchWindowProcessor should be int. but found " + attributeType);
+                        namePrefix + "KLengthBatchWindowProcessor should be INT. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Window length parameter for " +
@@ -81,7 +81,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 querySize = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue();
             } else {
                 throw new ExecutionPlanValidationException("Query size parameter for " +
-                        namePrefix + "KLengthBatchWindowProcessor should be int. but found " + attributeType);
+                        namePrefix + "KLengthBatchWindowProcessor should be INT. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Query size parameter for " +

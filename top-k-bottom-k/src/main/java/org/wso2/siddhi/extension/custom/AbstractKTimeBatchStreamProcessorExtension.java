@@ -47,18 +47,20 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
     private StreamSummary<Object> topKFinder;
+    private long startTime = 0;
     protected boolean isTopK;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
                                    ExecutionPlanContext executionPlanContext) {
         String namePrefix = (isTopK ? "Top" : "Bottom");
-        if (attributeExpressionExecutors.length == 3) {
+        if (attributeExpressionExecutors.length == 3 ||
+                attributeExpressionExecutors.length == 4) {
             this.executionPlanContext = executionPlanContext;
             attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
         } else {
-            throw new ExecutionPlanValidationException("3 arguments should be passed to " +
-                    namePrefix + "KTimeBatchWindowProcessor, but found " + attributeExpressionExecutors.length);
+            throw new ExecutionPlanValidationException("3 arguments (4 arguments if start time is also specified) should be " +
+                    "passed to " + namePrefix + "KTimeBatchWindowProcessor, but found " + attributeExpressionExecutors.length);
         }
 
         // Checking the window time parameter
@@ -66,9 +68,11 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
             Attribute.Type attributeType = attributeExpressionExecutors[1].getReturnType();
             if (attributeType == Attribute.Type.LONG) {
                 windowTime = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
+            } else if (attributeType == Attribute.Type.INT) {
+                windowTime = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
             } else {
                 throw new ExecutionPlanValidationException("Window time parameter for " +
-                        namePrefix + "KTimeBatchWindowProcessor should be long. but found " + attributeType);
+                        namePrefix + "KTimeBatchWindowProcessor should be INT or LONG. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Window time parameter for " +
@@ -83,12 +87,25 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                 querySize = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue();
             } else {
                 throw new ExecutionPlanValidationException("Query size parameter for " +
-                        namePrefix + "KTimeBatchWindowProcessor should be int. but found " + attributeType);
+                        namePrefix + "KTimeBatchWindowProcessor should be INT. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Query size parameter for " +
                     namePrefix + "KTimeBatchWindowProcessor should be a constant. but found a dynamic attribute " +
                     attributeExpressionExecutors[2].getClass().getCanonicalName());
+        }
+
+        if (attributeExpressionExecutors.length == 4) {
+            if (attributeExpressionExecutors[3] instanceof ConstantExpressionExecutor) {
+                Attribute.Type attributeType = attributeExpressionExecutors[3].getReturnType();
+                if (attributeType == Attribute.Type.INT) {
+                    startTime = executionPlanContext.getTimestampGenerator().currentTime() +
+                            (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[3]).getValue();
+                } else {
+                    throw new ExecutionPlanValidationException("Start time parameter for " +
+                            namePrefix + "KTimeBatchWindowProcessor should be INT. but found " + attributeType);
+                }
+            }
         }
 
         // Generating the list of attributes
@@ -104,34 +121,36 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor processor,
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
         synchronized (this) {
-            int frequencyCountMultiplier = (isTopK ? 1 : -1);
-            while (streamEventChunk.hasNext()) {
-                StreamEvent streamEvent = streamEventChunk.next();
-                StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
+            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
+            if (currentTime > startTime) {
+                int frequencyCountMultiplier = (isTopK ? 1 : -1);
+                while (streamEventChunk.hasNext()) {
+                    StreamEvent streamEvent = streamEventChunk.next();
+                    StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
-                if (streamEvent.getType() == ComplexEvent.Type.TIMER ||
-                        topKFinder == null) {
-                    long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-                    topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
-                    scheduler.notifyAt(currentTime + windowTime);
-                }
-                if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
-                    topKFinder.offer(
-                            attrVariableExpressionExecutor.execute(clonedStreamEvent),
-                            frequencyCountMultiplier
-                    );
-
-                    List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
-                    Object[] outputStreamEventData = new Object[2 * querySize];
-                    int i = 0;
-                    while (i < topKCounters.size()) {
-                        Counter<Object> topKCounter = topKCounters.get(i);
-                        outputStreamEventData[2 * i] = topKCounter.getItem();
-                        outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
-                        i++;
+                    if (streamEvent.getType() == ComplexEvent.Type.TIMER ||
+                            topKFinder == null) {
+                        topKFinder = new StreamSummary<Object>(Integer.MAX_VALUE);
+                        scheduler.notifyAt(currentTime + windowTime);
                     }
+                    if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
+                        topKFinder.offer(
+                                attrVariableExpressionExecutor.execute(clonedStreamEvent),
+                                frequencyCountMultiplier
+                        );
 
-                    complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
+                        List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
+                        Object[] outputStreamEventData = new Object[2 * querySize];
+                        int i = 0;
+                        while (i < topKCounters.size()) {
+                            Counter<Object> topKCounter = topKCounters.get(i);
+                            outputStreamEventData[2 * i] = topKCounter.getItem();
+                            outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
+                            i++;
+                        }
+
+                        complexEventPopulater.populateComplexEvent(streamEvent, outputStreamEventData);
+                    }
                 }
             }
         }
@@ -152,7 +171,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     @Override
     public Object[] currentState() {
         synchronized (this) {
-            return new Object[]{topKFinder, windowTime, querySize};
+            return new Object[]{topKFinder, windowTime, querySize, startTime};
         }
     }
 
@@ -162,6 +181,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
             topKFinder = (StreamSummary<Object>) state[0];
             windowTime = (Long) state[1];
             querySize = (Integer) state[2];
+            startTime = (Long) state[3];
         }
     }
 

@@ -42,12 +42,12 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
     }
 
     @Test
-    public void testTopKLengthBatchStreamProcessorExtensionExtension() throws InterruptedException {
+    public void testTopKTimeBatchStreamProcessorExtensionWithoutStartTime() throws InterruptedException {
         log.info("TopKLengthBatchStreamProcessor TestCase");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
-        String query = ("@info(name = 'query1') from inputStream#custom:topKTimeBatch(item, 1 sec, 3)  " +
+        String query = ("@info(name = 'query1') from inputStream#custom:bottomKTimeBatch(item, 1 sec, 3)  " +
                 "insert into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
@@ -59,12 +59,12 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                 for (Event event : inEvents) {
                     if (count == 5) {
                         // Checking the if the topK elements are considered
-                        Assert.assertEquals("item1", event.getData(2));
-                        Assert.assertEquals(3L, event.getData(3));
+                        Assert.assertEquals("item3", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
                         Assert.assertEquals("item2", event.getData(4));
                         Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item3", event.getData(6));
-                        Assert.assertEquals(1L, event.getData(7));
+                        Assert.assertEquals("item1", event.getData(6));
+                        Assert.assertEquals(3L, event.getData(7));
                     } else if (count == 6) {
                         // Checking if the window had been reset
                         Assert.assertEquals("item1", event.getData(2));
@@ -94,6 +94,68 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
 
         Thread.sleep(1000);
         Assert.assertEquals(7, count);
+        Assert.assertTrue(eventArrived);
+        executionPlanRuntime.shutdown();
+    }
+
+    @Test
+    public void testBottomKTimeBatchStreamProcessorExtensionWithStartTime() throws InterruptedException {
+        log.info("TopKLengthBatchStreamProcessor TestCase");
+        SiddhiManager siddhiManager = new SiddhiManager();
+
+        String inStreamDefinition = "define stream inputStream (item int, price double);";
+        String query = ("@info(name = 'query1') from inputStream#custom:bottomKTimeBatch(item, 1000, 3, 1000)  " +
+                "insert into outputStream;");
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
+
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                eventArrived = true;
+                for (Event event : inEvents) {
+                    if (count == 8) {
+                        // Checking the if the topK elements are considered
+                        Assert.assertEquals("item3", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item2", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item1", event.getData(6));
+                        Assert.assertEquals(3L, event.getData(7));
+                    } else if (count == 9) {
+                        // Checking if the window had been reset
+                        Assert.assertEquals("item1", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertNull(event.getData(4));
+                        Assert.assertNull(event.getData(5));
+                        Assert.assertNull(event.getData(6));
+                        Assert.assertNull(event.getData(7));
+                    }
+                    count++;
+                }
+            }
+        });
+
+        InputHandler inputHandler = executionPlanRuntime.getInputHandler("inputStream");
+        executionPlanRuntime.start();
+
+        inputHandler.send(new Object[]{"item3", 43});
+        inputHandler.send(new Object[]{"item3", 61});
+        inputHandler.send(new Object[]{"item3", 44});
+        // Start time
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10});
+        inputHandler.send(new Object[]{"item1", 13});
+        inputHandler.send(new Object[]{"item2", 65});
+        inputHandler.send(new Object[]{"item1", 74});
+        inputHandler.send(new Object[]{"item2", 25});
+        inputHandler.send(new Object[]{"item3", 64});
+        // Length Window reset
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10});
+
+        Thread.sleep(1000);
+        Assert.assertEquals(10, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
