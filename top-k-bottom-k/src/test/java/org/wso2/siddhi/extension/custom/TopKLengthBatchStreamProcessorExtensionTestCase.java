@@ -73,6 +73,8 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals(2L, event.getData(5));
                         Assert.assertEquals("item6", event.getData(6));
                         Assert.assertEquals(2L, event.getData(7));
+                    } else {
+                        Assert.fail();
                     }
                     count++;
                 }

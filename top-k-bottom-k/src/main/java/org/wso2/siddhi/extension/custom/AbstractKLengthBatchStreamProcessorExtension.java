@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractKLengthBatchStreamProcessorExtension extends StreamProcessor {
+    protected boolean isTopK;
     private int windowLength;
     private int querySize;
-    protected boolean isTopK;
 
     private int count;
     private VariableExpressionExecutor attrVariableExpressionExecutor;
@@ -114,7 +114,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 StreamEvent streamEvent = streamEventChunk.next();
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
-                // New current event tasks
+                // Current event arrival tasks
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                     count++;
                     lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
@@ -124,11 +124,23 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                     );
                 }
 
-                // End of window tasks
+                // Window end tasks
                 if (count == windowLength) {
+                    // Adding expired events
+                    if (outputExpectsExpiredEvents) {
+                        if (expiredStreamEvent != null) {
+                            expiredStreamEvent.setTimestamp(currentTime);
+                            outputStreamEventChunk.add(expiredStreamEvent);
+                        }
+                        expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                        expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                    }
+
+                    // Adding the reset event
                     outputStreamEventChunk.add(resetEvent);
                     resetEvent = null;
 
+                    // Adding the last event with the topK frequencies for the window
                     List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
                     Object[] outputStreamEventData = new Object[2 * querySize];
                     int i = 0;
@@ -141,23 +153,16 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                     complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
                     outputStreamEventChunk.add(lastStreamEvent);
 
-                    if (outputExpectsExpiredEvents) {
-                        if (expiredStreamEvent != null) {
-                            expiredStreamEvent.setTimestamp(currentTime);
-                            outputStreamEventChunk.add(expiredStreamEvent);
-                        }
-                        expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                        expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
-                    }
-
+                    // Resetting window
                     topKFinder = new StreamSummary<Object>(windowLength);
                     count = 0;
-                }
-            }
 
-            if (resetEvent == null) {
-                resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
-                resetEvent.setType(ComplexEvent.Type.RESET);
+                    // Setting the reset event to be used in the end of the window
+                    if (resetEvent == null) {
+                        resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
+                        resetEvent.setType(ComplexEvent.Type.RESET);
+                    }
+                }
             }
         }
 

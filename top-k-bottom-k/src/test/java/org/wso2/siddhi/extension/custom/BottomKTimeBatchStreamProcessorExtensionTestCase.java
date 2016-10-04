@@ -73,6 +73,8 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertNull(event.getData(5));
                         Assert.assertNull(event.getData(6));
                         Assert.assertNull(event.getData(7));
+                    } else {
+                        Assert.fail();
                     }
                     count++;
                 }
@@ -92,6 +94,8 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 75});
         inputHandler.send(new Object[]{"item4", 13});
+        // Time Window reset twice
+        Thread.sleep(2100); // This is to test if in empty time batch windows processor does not emit any events
 
         Thread.sleep(1000);
         Assert.assertEquals(2, count);
@@ -131,6 +135,8 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertNull(event.getData(5));
                         Assert.assertNull(event.getData(6));
                         Assert.assertNull(event.getData(7));
+                    } else {
+                        Assert.fail();
                     }
                     count++;
                 }
