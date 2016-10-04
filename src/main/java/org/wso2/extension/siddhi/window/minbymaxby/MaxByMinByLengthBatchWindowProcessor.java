@@ -22,6 +22,7 @@ import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
 import org.wso2.siddhi.core.event.MetaComplexEvent;
+import org.wso2.siddhi.core.event.state.StateEvent;
 import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.event.stream.StreamEventCloner;
 import org.wso2.siddhi.core.executor.ConstantExpressionExecutor;
@@ -32,7 +33,9 @@ import org.wso2.siddhi.core.query.processor.stream.window.FindableProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.WindowProcessor;
 import org.wso2.siddhi.core.table.EventTable;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
-import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
+import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
+//import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
+import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.ArrayList;
@@ -45,7 +48,6 @@ import java.util.Map;
 public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implements FindableProcessor {
     private int length;
     private int count = 0;
-
     protected String functionType;
     private ExpressionExecutor functionParameter;
     private ComplexEventChunk<StreamEvent> currentEventChunk = new ComplexEventChunk<StreamEvent>(false);
@@ -94,6 +96,9 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
             //clear the outputStream for every lengthBatch
             if (count == 0) {
                 outputStreamEventChunk.clear();
+                resultStreamEventChunk.clear();
+//                maxByMinByExecutor.setPreEvent(null);
+//               // maxByMinByExecutor.setPreParameterValue(getParameterValue(functionParameter,maxByMinByExecutor.getPreEvent()));
             }
 
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
@@ -106,8 +111,11 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
                 //currentEventChunk.add(clonedStreamEvent);
                 //put the value to treemap
-                maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
 
+                maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
+//                maxByMinByExecutor.findOutputEvent(clonedStreamEvent,parameterValue,maxByMinByExecutor.getFunctionType());
+//                maxByMinByExecutor.setPreEvent(clonedStreamEvent);
+//                maxByMinByExecutor.setPreParameterValue(getParameterValue(functionParameter,maxByMinByExecutor.getPreEvent()));
                 count++;
                 if (count == length) {
 //
@@ -117,6 +125,8 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                     outputStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
                     resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
 
+//                    outputStreamEventChunk.add(maxByMinByExecutor.getOutputEvent());
+//                    System.out.println(maxByMinByExecutor.getOutputEvent());
                     System.out.println(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
                     maxByMinByExecutor.getTreeMap().clear();
                     if (outputStreamEventChunk.getFirst() != null) {
@@ -133,40 +143,6 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     }
 
-    /**
-     * To find events from the processor event pool, that the matches the matchingEvent based on finder logic.
-     *
-     * @param matchingEvent the event to be matched with the events at the processor
-     * @param finder        the execution element responsible for finding the corresponding events that matches
-     *                      the matchingEvent based on pool of events at Processor
-     * @return the matched events
-     */
-    @Override
-    public synchronized StreamEvent find(ComplexEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, resultStreamEventChunk, streamEventCloner);
-    }
-
-    /**
-     * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
-     * matchingEvent and the given matching expression logic.
-     *
-     * @param expression                  the matching expression
-     * @param matchingMetaComplexEvent    the meta structure of the incoming matchingEvent
-     * @param executionPlanContext        current execution plan context
-     * @param variableExpressionExecutors the list of variable ExpressionExecutors already created
-     * @param eventTableMap               map of event tables
-     * @param matchingStreamIndex         the stream index of the incoming matchingEvent
-     * @param withinTime                  the maximum time gap between the events to be matched
-     * @return finder having the capability of finding events at the processor against the expression and incoming
-     * matchingEvent
-     */
-    @Override
-    public Finder constructFinder(Expression expression, MetaComplexEvent matchingMetaComplexEvent,
-                                  ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors,
-                                  Map<String, EventTable> eventTableMap, int matchingStreamIndex, long withinTime) {
-        return CollectionOperatorParser.parse(expression, matchingMetaComplexEvent, executionPlanContext,
-                variableExpressionExecutors, eventTableMap, matchingStreamIndex, inputDefinition, withinTime);
-    }
 
 
     @Override
@@ -202,4 +178,13 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
         return parameterValue;
     }
 
+    @Override
+    public StreamEvent find(StateEvent stateEvent, Finder finder) {
+        return finder.find(stateEvent, resultStreamEventChunk, streamEventCloner);
+    }
+
+    @Override
+    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> list, Map<String, EventTable> map) {
+        return OperatorParser.constructOperator(resultStreamEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
+    }
 }

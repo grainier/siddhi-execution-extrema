@@ -176,4 +176,54 @@ public class MaxByLengthWindowProcessorTestCase {
             executionPlanRuntime.shutdown();
         }
     }
+
+
+
+//    @Test
+//    public void testMaxByWindowForLengthBatch6() throws InterruptedException {
+//        log.info("Join test1");
+//
+//        SiddhiManager siddhiManager = new SiddhiManager();
+//        String streams = "" +
+//                "define stream cseEventStream (symbol string, price float, volume int); " +
+//                "define stream twitterStream (num float, tweet string, company string); ";
+//        String query = "" +
+//                "@info(name = 'query1') " +
+//                "from cseEventStream#window.minbymaxby:maxByLengthBatch(price, 2) join twitterStream#window.minbymaxby:maxByLengthBatch(num, 2) " +
+//                "on cseEventStream.symbol== twitterStream.company " +
+//                "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
+//                "insert all events into outputStream ;";
+//
+//        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
+//        try {
+//            final List<Object> results = new ArrayList<Object>();
+//            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+//
+//                @Override
+//                public void receive(Event[] events) {
+//
+//                    System.out.print("output event: ");
+//                    EventPrinter.print(events);
+//                }
+//            });
+//            InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
+//            InputHandler twitterStreamHandler = executionPlanRuntime.getInputHandler("twitterStream");
+//            executionPlanRuntime.start();
+//
+//            cseEventStreamHandler.send(new Object[]{"WSO2", 700f, 14});
+//            cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
+//
+//            twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
+//            twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
+//
+////            cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
+////            cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
+////            cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
+//
+//        } finally {
+//            executionPlanRuntime.shutdown();
+//        }
+//
+//    }
+
 }
