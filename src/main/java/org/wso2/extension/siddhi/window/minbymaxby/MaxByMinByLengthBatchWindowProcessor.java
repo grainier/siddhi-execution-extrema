@@ -53,7 +53,9 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     private ComplexEventChunk<StreamEvent> currentEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
     private VariableExpressionExecutor[] variableExpressionExecutors;
-    MaxByMinByExecutor maxByMinByExecutor;
+    private MaxByMinByExecutor maxByMinByExecutor;
+    private StreamEvent oldevent;
+    private StreamEvent resultevent;
 
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
 
@@ -94,12 +96,11 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
             ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
             //clear the outputStream for every lengthBatch
-            if (count == 0) {
-                outputStreamEventChunk.clear();
-                resultStreamEventChunk.clear();
-//                maxByMinByExecutor.setPreEvent(null);
-//               // maxByMinByExecutor.setPreParameterValue(getParameterValue(functionParameter,maxByMinByExecutor.getPreEvent()));
-            }
+//            if (count == 0) {
+//                outputStreamEventChunk.clear();
+//                resultStreamEventChunk.clear();
+//
+//            }
 
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             while (streamEventChunk.hasNext()) {
@@ -107,28 +108,40 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
                 //get the parameter value for every events
                 Object parameterValue = getParameterValue(functionParameter, streamEvent);
-                StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
+                StreamEvent currentevent = streamEventCloner.copyStreamEvent(streamEvent);
+
+                if (count == 0) {
+                    outputStreamEventChunk.clear();
+                    resultStreamEventChunk.clear();
+                    oldevent=currentevent;
+
+                }
 
                 //currentEventChunk.add(clonedStreamEvent);
                 //put the value to treemap
 
-                maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
-//                maxByMinByExecutor.findOutputEvent(clonedStreamEvent,parameterValue,maxByMinByExecutor.getFunctionType());
-//                maxByMinByExecutor.setPreEvent(clonedStreamEvent);
-//                maxByMinByExecutor.setPreParameterValue(getParameterValue(functionParameter,maxByMinByExecutor.getPreEvent()));
+                //maxByMinByExecutor.insert(currentevent, parameterValue);
+                if(functionType=="MAX") {
+                    resultevent = maxByMinByExecutor.getMaxEventBatchProcessor(currentevent, oldevent, functionParameter);
+                    oldevent=resultevent;
+                }
+                else if (functionType=="MIN"){
+                    resultevent=maxByMinByExecutor.getMaxEventBatchProcessor(currentevent,oldevent,functionParameter);
+                    oldevent=resultevent;
+                }
+
                 count++;
                 if (count == length) {
-//
                     count = 0;
                     //get the results
 
-                    outputStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
-                    resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
+//                    outputStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
+//                    resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
+                      outputStreamEventChunk.add(resultevent);
+                      resultStreamEventChunk.add(resultevent);
 
-//                    outputStreamEventChunk.add(maxByMinByExecutor.getOutputEvent());
-//                    System.out.println(maxByMinByExecutor.getOutputEvent());
-                    System.out.println(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
-                    maxByMinByExecutor.getTreeMap().clear();
+                    System.out.println(resultevent);
+                    //maxByMinByExecutor.getSortedEventMap().clear();
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
                     }

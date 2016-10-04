@@ -65,7 +65,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 public void receive(Event[] events) {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
-                    Object[] results = new Object[]{"et", 900f, 1};
+                    Object[] results = new Object[]{"dg", 900f, 24};
                     assertArrayEquals(results, events[0].getData());
 
                 }
@@ -75,7 +75,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             inputHandler.send(new Object[]{"IBM", 700f, 14});
             inputHandler.send(new Object[]{"IBM", 40.5f, 2});
             inputHandler.send(new Object[]{"et", 900f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
+            inputHandler.send(new Object[]{"dg", 900f, 24});
 
             Thread.sleep(1000);
 
@@ -226,7 +226,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
     @Test
     public void testMaxByWindowForLengthBatch6() throws InterruptedException {
-        log.info("Join test1");
+        log.info("Join test2");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String streams = "" +
@@ -274,7 +274,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
     @Test
     public void testMaxByWindowForLengthBatch7() throws InterruptedException {
-        log.info("Join test1");
+        log.info("Join test3");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String streams = "" +
