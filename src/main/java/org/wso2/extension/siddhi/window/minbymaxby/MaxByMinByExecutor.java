@@ -152,7 +152,6 @@ public class MaxByMinByExecutor {
                 default:
                     if ((Integer) maxByAttribute.execute(currentEvent) >= (Integer) maxByAttribute.execute(maxEvent)) {
                         maxEvent = currentEvent;
-                        
                     }
                     break;
             }
