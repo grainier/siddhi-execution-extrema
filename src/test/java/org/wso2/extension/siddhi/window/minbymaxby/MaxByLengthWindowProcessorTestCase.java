@@ -52,7 +52,7 @@ public class MaxByLengthWindowProcessorTestCase {
         log.info("Testing maxByLengthWindowProcessor with no of events less than window size for float type parameter");
         SiddhiManager siddhiManager = new SiddhiManager();
 
-        siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
+
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:maxByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";

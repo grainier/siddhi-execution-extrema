@@ -113,9 +113,7 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                 //put the value to treemap
 
                 maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
-//                maxByMinByExecutor.findOutputEvent(clonedStreamEvent,parameterValue,maxByMinByExecutor.getFunctionType());
-//                maxByMinByExecutor.setPreEvent(clonedStreamEvent);
-//                maxByMinByExecutor.setPreParameterValue(getParameterValue(functionParameter,maxByMinByExecutor.getPreEvent()));
+
                 count++;
                 if (count == length) {
 //
@@ -125,10 +123,9 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                     outputStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
                     resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
 
-//                    outputStreamEventChunk.add(maxByMinByExecutor.getOutputEvent());
-//                    System.out.println(maxByMinByExecutor.getOutputEvent());
+
                     System.out.println(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
-                    maxByMinByExecutor.getTreeMap().clear();
+                    maxByMinByExecutor.getSortedEventMap().clear();
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
                     }

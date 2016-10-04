@@ -122,7 +122,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
 
                         //remove the expired event from treemap
                         Object expiredEventParameterValue = getParameterValue(funtionParameter, firstEvent);
-                        maxByMinByExecutor.getTreeMap().remove(expiredEventParameterValue);
+                        maxByMinByExecutor.getSortedEventMap().remove(expiredEventParameterValue);
                         events.remove(0);
                         //
 

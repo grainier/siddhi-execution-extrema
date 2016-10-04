@@ -52,7 +52,7 @@ public class MinByLengthBatchWindowProcessorTestCase {
 
         SiddhiManager siddhiManager = new SiddhiManager();
 
-        siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
+        //siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLengthBatch(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
@@ -181,7 +181,7 @@ public class MinByLengthBatchWindowProcessorTestCase {
 
         SiddhiManager siddhiManager = new SiddhiManager();
 
-        siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
+        //siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLengthBatch(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
