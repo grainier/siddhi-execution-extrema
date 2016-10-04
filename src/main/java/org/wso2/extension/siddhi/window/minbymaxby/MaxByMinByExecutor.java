@@ -88,7 +88,7 @@ public class MaxByMinByExecutor {
      * @return minEvent
      */
 
-    public StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor minByAttribute) {
+    public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor minByAttribute) {
         StreamEvent minEvent = oldEvent;
         if (minEvent != null) {
             Attribute.Type attributeType = minByAttribute.getReturnType();
@@ -129,7 +129,7 @@ public class MaxByMinByExecutor {
      * @return maxEvent
      */
 
-    public StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
+    public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
             Attribute.Type attributeType = maxByAttribute.getReturnType();
