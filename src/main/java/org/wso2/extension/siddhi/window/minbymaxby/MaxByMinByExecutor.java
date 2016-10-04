@@ -32,11 +32,10 @@ import java.util.TreeMap;
 public class MaxByMinByExecutor {
     private String functionType;
     private TreeMap<Object, StreamEvent> treeMap = new TreeMap<Object, StreamEvent>();
-    private ExpressionExecutor functionParameter;
     private TreeMap<Object, StreamEvent> getTreeMap() {
         return treeMap;
     }
-    private StreamEvent outputEvent;
+
 
 
     public String getFunctionType() {
@@ -70,8 +69,6 @@ public class MaxByMinByExecutor {
     public StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
         if (functionType.equals("MIN")) {
-
-
             Object minEventKey = treeMap.firstKey();
             outputEvent = treeMap.get(minEventKey);
         } else {
@@ -80,64 +77,5 @@ public class MaxByMinByExecutor {
         }
         return outputEvent;
     }
-
-
-//    @Override
-//    public int compare(StreamEvent preEvent, StreamEvent postEvent) {
-//        Object preParameterValue;
-//        Object postParameterValue;
-//        preParameterValue = functionParameter.execute(preEvent);
-//        postParameterValue=functionParameter.execute(postEvent);
-//        if(preParameterValue)
-//
-//        return 0;
-//    }
-//
-//
-//
-////    public void findOutputEvent(StreamEvent clonedStreamEvent, Object parameterValue,String functionType) {
-////
-////        if (functionType.equals("MIN")) {
-////            if(parameterValue instanceof Integer){
-////                        int x;
-////
-////                        if(count==0){x=0;}else{
-////                            x=(Integer) preParameterValue;
-////                        }
-////
-////                        if(((Integer) parameterValue).compareTo(x)<0);{
-////                            preParameterValue=parameterValue;
-////                            outputEvent=clonedStreamEvent;
-////                            count++;
-////                        }
-////
-////                        if(((Integer) parameterValue).compareTo(x)>0){
-////                            outputEvent=preEvent;
-////                        }
-////
-////            }else if(parameterValue instanceof String){
-////                        String x=(String) parameterValue;
-////                        if(((String) parameterValue).compareTo((String) preParameterValue)>0);{
-////                            preParameterValue=parameterValue;
-////                            outputEvent=clonedStreamEvent;
-////                            count++;
-////                        }
-////            }else if(parameterValue instanceof Float){
-////                        Float x=(Float) parameterValue;
-////                        if(((Float) parameterValue).compareTo((Float) preParameterValue)>0);{
-////                            preParameterValue=parameterValue;
-////                            outputEvent=clonedStreamEvent;
-////                            count++;
-////                        }
-////            }
-////        }
-////
-////    }
-//
-
-
-
-
-
-
+    
 }
