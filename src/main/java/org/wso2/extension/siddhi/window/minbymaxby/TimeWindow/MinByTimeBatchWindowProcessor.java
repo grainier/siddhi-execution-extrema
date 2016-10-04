@@ -2,6 +2,6 @@ package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
 public class MinByTimeBatchWindowProcessor extends MinByMaxByTimeBatchWindowProcessor{
     public MinByTimeBatchWindowProcessor(){
-        sortingType = "minby";
+        windowType = Constants.MinByTimeBatchWindow;
     }
 }

@@ -24,22 +24,19 @@ import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
-    private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
     private StreamEvent resetEvent = null;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
     private boolean isStartTimeEnabled = false;
     private long startTime = 0;
-    private ExpressionExecutor minByAttribute;
-    private ExpressionExecutor sortByAttriute;
-    private StreamEvent minEvent = null;
-    private StreamEvent oldEvent = null;
-    protected String sortingType;
+    private ExpressionExecutor sortByAttribute;
+    private StreamEvent currentEvent = null;
+    private StreamEvent expiredEvent = null;
+    protected String windowType;
 
     public void setTimeInMilliSeconds(long timeInMilliSeconds) {
         this.timeInMilliSeconds = timeInMilliSeconds;
@@ -48,18 +45,15 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
-        if (outputExpectsExpiredEvents) {
-            this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
-        }
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            minByAttribute = attributeExpressionExecutors[0];
-            sortByAttriute = attributeExpressionExecutors[0];
+            sortByAttribute = attributeExpressionExecutors[0];
             if (!((attributeType == Attribute.Type.DOUBLE)
                     || (attributeType == Attribute.Type.INT)
                     || (attributeType == Attribute.Type.FLOAT)
                     || (attributeType == Attribute.Type.LONG))) {
-                throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minByTimeWindow " +
+                throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
+                        windowType + " " +
                         "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
                         ", but found " + attributeType.toString());
@@ -78,13 +72,14 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
             }
         } else if (attributeExpressionExecutors.length == 3) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            minByAttribute = attributeExpressionExecutors[0];
+            sortByAttribute = attributeExpressionExecutors[0];
             if (!((attributeType == Attribute.Type.DOUBLE)
                     || (attributeType == Attribute.Type.INT)
                     || (attributeType == Attribute.Type.FLOAT)
                     || (attributeType == Attribute.Type.LONG))) {
-                throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minByTimeWindow " +
-                        "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
+                        windowType +
+                        " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
                         ", but found " + attributeType.toString());
             }
@@ -95,10 +90,12 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                 } else if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.LONG) {
                     timeInMilliSeconds = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
                 } else {
-                    throw new ExecutionPlanValidationException("Time window's parameter attribute should be either int or long, but found " + attributeExpressionExecutors[1].getReturnType());
+                    throw new ExecutionPlanValidationException("Time window's parameter attribute should be either int or long, but found " +
+                            attributeExpressionExecutors[1].getReturnType());
                 }
             } else {
-                throw new ExecutionPlanValidationException("Time window should have constant parameter attribute but found a dynamic attribute " + attributeExpressionExecutors[1].getClass().getCanonicalName());
+                throw new ExecutionPlanValidationException("Time window should have constant parameter attribute but found a dynamic attribute " +
+                        attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
             // start time
             isStartTimeEnabled = true;
@@ -108,7 +105,8 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                 startTime = Long.parseLong(String.valueOf(((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue()));
             }
         } else {
-            throw new ExecutionPlanValidationException("Minby Time Batch window should only have two or three parameters. but found " + attributeExpressionExecutors.length + " input attributes");
+            throw new ExecutionPlanValidationException( windowType +" should only have two or three parameters. but found " +
+                    attributeExpressionExecutors.length + " input attributes");
         }
     }
 
@@ -141,36 +139,36 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (sortingType.equals("minby")){
-                    minEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent , minEvent , minByAttribute);
+                if (windowType.equals(Constants.MinByTimeBatchWindow)){
+                    currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
                 }
-                else if (sortingType.equals("maxby")){
-                    minEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent , minEvent , minByAttribute);
+                else if (windowType.equals(Constants.MaxByTimeBatchWindow)){
+                    currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
                 }
             }
             streamEventChunk.clear();
             if (sendEvents) {
 
                 if (outputExpectsExpiredEvents) {
-                    if(oldEvent != null){
-                        oldEvent.setTimestamp(currentTime);
-                        streamEventChunk.add(oldEvent);
+                    if(expiredEvent != null){
+                        expiredEvent.setTimestamp(currentTime);
+                        streamEventChunk.add(expiredEvent);
                     }
                 }
-                oldEvent = null;
-                if (minEvent != null) {
+                expiredEvent = null;
+                if (currentEvent != null) {
 
                     // add reset event in front of current events
                     streamEventChunk.add(resetEvent);
                     resetEvent = null;
-                    StreamEvent toExpireEvent = streamEventCloner.copyStreamEvent(minEvent);
+                    StreamEvent toExpireEvent = streamEventCloner.copyStreamEvent(currentEvent);
                     toExpireEvent.setType(StreamEvent.Type.EXPIRED);
-                    oldEvent = toExpireEvent;
-                    resetEvent = streamEventCloner.copyStreamEvent(minEvent);
+                    expiredEvent = toExpireEvent;
+                    resetEvent = streamEventCloner.copyStreamEvent(currentEvent);
                     resetEvent.setType(ComplexEvent.Type.RESET);
-                    streamEventChunk.add(minEvent);
+                    streamEventChunk.add(currentEvent);
                 }
-                minEvent = null;
+                currentEvent = null;
             }
         }
         if (streamEventChunk.getFirst() != null) {
@@ -229,11 +227,11 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
         return null;
     }
 
-    public String getSortingType() {
-        return sortingType;
+    public String getWindowType() {
+        return windowType;
     }
 
-    public void setSortingType(String sortingType) {
-        this.sortingType = sortingType;
+    public void setWindowType(String windowType) {
+        this.windowType = windowType;
     }
 }
