@@ -20,6 +20,7 @@ package org.wso2.extension.siddhi.window.minbymaxby;
 
 import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
+import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.expression.constant.FloatConstant;
 import org.wso2.siddhi.query.compiler.SiddhiQLParser;
 
@@ -75,9 +76,87 @@ public class MaxByMinByExecutor {
         return outputEvent;
     }
 
+    /**
+     * Retrun the minimum event comparing two events
+     * 
+     * @param currentEvent  new event 
+     * @param oldEvent  the previous event that is stored as the minimun event
+     * @param minByAttribute  the attribute which the comparison is done.
+     * @return minEvent
+     */
 
+    public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor minByAttribute) {
+        StreamEvent minEvent = oldEvent;
+        if (minEvent != null) {
+            Attribute.Type attributeType = minByAttribute.getReturnType();
+            switch (attributeType) {
+                case DOUBLE:
+                    if ((Double) minByAttribute.execute(currentEvent) <= (Double) minByAttribute.execute(minEvent)) {
+                        minEvent = currentEvent;
+                    }
+                    break;
+                case FLOAT:
+                    if ((Float) minByAttribute.execute(currentEvent) <= (Float) minByAttribute.execute(minEvent)) {
+                        minEvent = currentEvent;
+                    }
+                    break;
+                case LONG:
+                    if ((Long) minByAttribute.execute(currentEvent) <= (Long) minByAttribute.execute(minEvent)) {
+                        minEvent = currentEvent;
+                    }
+                    break;
+                default:
+                    if ((Integer) minByAttribute.execute(currentEvent) <= (Integer) minByAttribute.execute(minEvent)) {
+                        minEvent = currentEvent;
+                    }
+                    break;
+            }
+        } else {
+            minEvent = currentEvent;
+        }
+        return minEvent;
+    }
 
+    /**
+     * Retrun the maximum event comparing two events
+     *
+     * @param currentEvent  new event 
+     * @param oldEvent  the previous event that is stored as the maximum event
+     * @param maxByAttribute  the attribute which the comparison is done.
+     * @return maxEvent
+     */
 
+    public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
+        StreamEvent maxEvent = oldEvent;
+        if (maxEvent != null) {
+            Attribute.Type attributeType = maxByAttribute.getReturnType();
+            switch (attributeType) {
+                case DOUBLE:
+                    if ((Double) maxByAttribute.execute(currentEvent) >= (Double) maxByAttribute.execute(maxEvent)) {
+                        maxEvent = currentEvent;
+                    }
+                    break;
+                case FLOAT:
+                    if ((Float) maxByAttribute.execute(currentEvent) >= (Float) maxByAttribute.execute(maxEvent)) {
+                        maxEvent = currentEvent;
+                    }
+                    break;
+                case LONG:
+                    if ((Long) maxByAttribute.execute(currentEvent) >= (Long) maxByAttribute.execute(maxEvent)) {
+                        maxEvent = currentEvent;
+                    }
+                    break;
+                default:
+                    if ((Integer) maxByAttribute.execute(currentEvent) >= (Integer) maxByAttribute.execute(maxEvent)) {
+                        maxEvent = currentEvent;
+                    }
+                    break;
+            }
+        } else {
+            maxEvent = currentEvent;
+        }
+        return maxEvent;
+    }
 
 
 }
