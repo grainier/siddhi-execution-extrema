@@ -36,7 +36,7 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent = null;
     private StreamEvent expiredEvent = null;
-    protected String windowType;
+    protected String timeBatchWindowType;
 
     public void setTimeInMilliSeconds(long timeInMilliSeconds) {
         this.timeInMilliSeconds = timeInMilliSeconds;
@@ -53,7 +53,7 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                     || (attributeType == Attribute.Type.FLOAT)
                     || (attributeType == Attribute.Type.LONG))) {
                 throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
-                        windowType + " " +
+                        timeBatchWindowType + " " +
                         "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
                         ", but found " + attributeType.toString());
@@ -78,7 +78,7 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                     || (attributeType == Attribute.Type.FLOAT)
                     || (attributeType == Attribute.Type.LONG))) {
                 throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
-                        windowType +
+                        timeBatchWindowType +
                         " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
                         ", but found " + attributeType.toString());
@@ -105,7 +105,7 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                 startTime = Long.parseLong(String.valueOf(((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue()));
             }
         } else {
-            throw new ExecutionPlanValidationException( windowType +" should only have two or three parameters. but found " +
+            throw new ExecutionPlanValidationException( timeBatchWindowType +" should only have two or three parameters. but found " +
                     attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -139,10 +139,10 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (windowType.equals(Constants.MinByTimeBatchWindow)){
+                if (timeBatchWindowType.equals(Constants.MIN_BY)){
                     currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
                 }
-                else if (windowType.equals(Constants.MaxByTimeBatchWindow)){
+                else if (timeBatchWindowType.equals(Constants.MAX_BY)){
                     currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
                 }
             }
@@ -177,8 +177,6 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
             streamEventChunk.setBatch(false);
         }
     }
-
-
 
     private long getNextEmitTime(long currentTime) {
         // returns the next emission time based on system clock round time values.
@@ -223,15 +221,9 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
     }
 
     @Override
-    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
+    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
+                                  List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
         return null;
     }
 
-    public String getWindowType() {
-        return windowType;
-    }
-
-    public void setWindowType(String windowType) {
-        this.windowType = windowType;
-    }
 }

@@ -53,8 +53,6 @@ public class MaxByMinByExecutor {
      */
     public void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
         sortedEventMap.put(parameterValue, clonedStreamEvent);
-
-
     }
 
     /**
@@ -77,7 +75,7 @@ public class MaxByMinByExecutor {
     }
 
     /**
-     * Retrun the minimum event comparing two events
+     * Return the minimum event comparing two events
      * 
      * @param currentEvent  new event 
      * @param oldEvent  the previous event that is stored as the minimun event
