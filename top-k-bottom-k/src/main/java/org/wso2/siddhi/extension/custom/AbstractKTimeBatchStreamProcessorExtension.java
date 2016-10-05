@@ -62,10 +62,18 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         if (attributeExpressionExecutors.length == 3 ||
                 attributeExpressionExecutors.length == 4) {
             this.executionPlanContext = executionPlanContext;
-            attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
         } else {
             throw new ExecutionPlanValidationException("3 arguments (4 arguments if start time is also specified) should be " +
-                    "passed to " + namePrefix + "KTimeBatchWindowProcessor, but found " + attributeExpressionExecutors.length);
+                    "passed to " + namePrefix + "KTimeBatchStreamProcessor, but found " + attributeExpressionExecutors.length);
+        }
+
+        // Checking the topK/bottomK attribute
+        if (attributeExpressionExecutors[0] instanceof VariableExpressionExecutor) {
+            attrVariableExpressionExecutor = (VariableExpressionExecutor) attributeExpressionExecutors[0];
+        } else {
+            throw new ExecutionPlanValidationException("Attribute for ordering in " +
+                    namePrefix + "KTimeBatchStreamProcessor should be a variable. but found a constant attribute " +
+                    attributeExpressionExecutors[1].getClass().getCanonicalName());
         }
 
         // Checking the window time parameter
@@ -77,11 +85,11 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                 windowTime = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
             } else {
                 throw new ExecutionPlanValidationException("Window time parameter for " +
-                        namePrefix + "KTimeBatchWindowProcessor should be INT or LONG. but found " + attributeType);
+                        namePrefix + "KTimeBatchStreamProcessor should be INT or LONG. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Window time parameter for " +
-                    namePrefix + "KTimeBatchWindowProcessor should be a constant. but found a dynamic attribute " +
+                    namePrefix + "KTimeBatchStreamProcessor should be a constant. but found a dynamic attribute " +
                     attributeExpressionExecutors[1].getClass().getCanonicalName());
         }
 
@@ -92,11 +100,11 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                 querySize = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue();
             } else {
                 throw new ExecutionPlanValidationException("Query size parameter for " +
-                        namePrefix + "KTimeBatchWindowProcessor should be INT. but found " + attributeType);
+                        namePrefix + "KTimeBatchStreamProcessor should be INT. but found " + attributeType);
             }
         } else {
             throw new ExecutionPlanValidationException("Query size parameter for " +
-                    namePrefix + "KTimeBatchWindowProcessor should be a constant. but found a dynamic attribute " +
+                    namePrefix + "KTimeBatchStreamProcessor should be a constant. but found a dynamic attribute " +
                     attributeExpressionExecutors[2].getClass().getCanonicalName());
         }
 
@@ -108,7 +116,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                             (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[3]).getValue();
                 } else {
                     throw new ExecutionPlanValidationException("Start time parameter for " +
-                            namePrefix + "KTimeBatchWindowProcessor should be INT. but found " + attributeType);
+                            namePrefix + "KTimeBatchStreamProcessor should be INT. but found " + attributeType);
                 }
             }
         }
@@ -140,7 +148,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                         scheduler.notifyAt(currentTime + windowTime);
                     }
 
-                    // Current event arrival tasks
+                    // New current event tasks
                     if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                         lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
                         topKFinder.offer(
@@ -152,13 +160,8 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                     // End of window tasks
                     if (streamEvent.getType() == ComplexEvent.Type.TIMER) {
                         // Adding the expired events
-                        if (outputExpectsExpiredEvents) {
-                            if (expiredStreamEvent != null) {
-                                expiredStreamEvent.setTimestamp(currentTime);
-                                outputStreamEventChunk.add(expiredStreamEvent);
-                            }
-                            expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                            expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                        if (outputExpectsExpiredEvents && expiredStreamEvent != null) {
+                            outputStreamEventChunk.add(expiredStreamEvent);
                         }
 
                         // Adding the reset event
@@ -180,6 +183,13 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                             }
                             complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
                             outputStreamEventChunk.add(lastStreamEvent);
+
+                            // Setting the event to be expired in the next window
+                            if (outputExpectsExpiredEvents) {
+                                expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                                expiredStreamEvent.setTimestamp(currentTime);
+                                expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                            }
                             lastStreamEvent = null;
                         }
 

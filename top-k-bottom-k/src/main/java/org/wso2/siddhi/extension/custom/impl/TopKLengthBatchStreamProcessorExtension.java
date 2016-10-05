@@ -16,7 +16,9 @@
  * under the License.
  */
 
-package org.wso2.siddhi.extension.custom;
+package org.wso2.siddhi.extension.custom.impl;
+
+import org.wso2.siddhi.extension.custom.AbstractKLengthBatchStreamProcessorExtension;
 
 public class TopKLengthBatchStreamProcessorExtension extends AbstractKLengthBatchStreamProcessorExtension {
     public TopKLengthBatchStreamProcessorExtension() {

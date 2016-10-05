@@ -16,10 +16,12 @@
  * under the License.
  */
 
-package org.wso2.siddhi.extension.custom;
+package org.wso2.siddhi.extension.custom.impl;
 
-public class BottomKTimeBatchStreamProcessorExtension extends AbstractKTimeBatchStreamProcessorExtension {
-    public BottomKTimeBatchStreamProcessorExtension() {
-        isTopK = false;
+import org.wso2.siddhi.extension.custom.AbstractKStreamProcessorExtension;
+
+public class TopKStreamProcessorExtension extends AbstractKStreamProcessorExtension {
+    public TopKStreamProcessorExtension() {
+        isTopK = true;
     }
 }

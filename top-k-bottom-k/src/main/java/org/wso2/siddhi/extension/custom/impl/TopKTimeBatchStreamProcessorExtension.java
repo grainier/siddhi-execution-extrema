@@ -16,7 +16,9 @@
  * under the License.
  */
 
-package org.wso2.siddhi.extension.custom;
+package org.wso2.siddhi.extension.custom.impl;
+
+import org.wso2.siddhi.extension.custom.AbstractKTimeBatchStreamProcessorExtension;
 
 public class TopKTimeBatchStreamProcessorExtension extends AbstractKTimeBatchStreamProcessorExtension {
     public TopKTimeBatchStreamProcessorExtension() {
