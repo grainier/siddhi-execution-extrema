@@ -32,7 +32,7 @@ import java.util.TreeMap;
  */
 public class MaxByMinByExecutor {
     private String functionType;
-    private TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
+    private static TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
     public String getFunctionType() {
         return functionType;
     }
@@ -51,7 +51,7 @@ public class MaxByMinByExecutor {
      * @param clonedStreamEvent copy of current event
      * @param parameterValue    key for the treemap(object which holds the parameter value)
      */
-    public void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
+    public static void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
         sortedEventMap.put(parameterValue, clonedStreamEvent);
     }
 
@@ -62,7 +62,7 @@ public class MaxByMinByExecutor {
      * @return outputEvent
      */
 
-    public StreamEvent getResult(String functionType) {
+    public static StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
         if (functionType.equals("MIN")) {
             Object minEventKey = sortedEventMap.firstKey();
