@@ -14,6 +14,7 @@ import org.wso2.siddhi.core.query.processor.SchedulingProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.FindableProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.WindowProcessor;
 import org.wso2.siddhi.core.table.EventTable;
+import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.core.util.Scheduler;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
@@ -30,7 +31,8 @@ import java.util.*;
 
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
 
-    protected String timeWindowType;
+    protected String sortType;
+    protected String windowType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
@@ -58,11 +60,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             if (!((attributeType == Attribute.Type.DOUBLE)
                     || (attributeType == Attribute.Type.INT)
                     || (attributeType == Attribute.Type.FLOAT)
-                    || (attributeType == Attribute.Type.LONG))) {
+                    || (attributeType == Attribute.Type.LONG)
+                    || (attributeType == Attribute.Type.STRING))) {
                 throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
-                        timeWindowType +
+                        windowType +
                         " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
+                        " or " + Attribute.Type.STRING +
                         ", but found " + attributeType.toString());
             }
 
@@ -82,7 +86,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             }
         } else {
             throw new ExecutionPlanValidationException("Invalid no of arguments passed to " +
-                    timeWindowType + ", " +
+                    windowType + ", " +
                     "required 2, but found " + attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -127,7 +131,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             streamEventChunk.clear();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (timeWindowType.equals(Constants.MIN_BY)) {
+                if (sortType.equals(Constants.MIN_BY)) {
                     tempEvent = MaxByMinByExecutor.getResult("MIN");
                 } else {
                     tempEvent = MaxByMinByExecutor.getResult("MAX");

@@ -11,7 +11,7 @@
 
 
     <packaging>bundle</packaging>
-    <name>WSO2 Siddhi - Window Library For Unique Time</name>
+    <name>WSO2 Siddhi - MinByMaxby-Extension</name>
     <url>http://wso2.org</url>
     <dependencies>
         <dependency>
