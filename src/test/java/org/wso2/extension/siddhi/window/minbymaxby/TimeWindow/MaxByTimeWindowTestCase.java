@@ -8,7 +8,6 @@ import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
-import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
 
 public class MaxByTimeWindowTestCase {
@@ -170,7 +169,6 @@ public class MaxByTimeWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;

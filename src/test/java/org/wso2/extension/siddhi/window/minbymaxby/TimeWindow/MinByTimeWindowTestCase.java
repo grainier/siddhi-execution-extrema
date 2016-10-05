@@ -44,7 +44,6 @@ public class MinByTimeWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;
@@ -63,7 +62,7 @@ public class MinByTimeWindowTestCase {
         inputHandler.send(new Object[]{"IBM", 60.50f, 6});
         inputHandler.send(new Object[]{"AAA", 600.5f, 7});
         Thread.sleep(500);
-        Assert.assertEquals(4, inEventCount);
+        Assert.assertEquals(5, inEventCount);
         Assert.assertEquals(0,removeEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
@@ -85,7 +84,6 @@ public class MinByTimeWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;
@@ -169,7 +167,6 @@ public class MinByTimeWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;
@@ -190,6 +187,8 @@ public class MinByTimeWindowTestCase {
         inputHandler.send(new Object[]{"YAHOO", 432f, 8});
         Thread.sleep(1100);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(0,inEventCount);
+        Assert.assertEquals(2, removeEventCount);
     }
 
     @Test
@@ -209,7 +208,6 @@ public class MinByTimeWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;
@@ -230,7 +228,7 @@ public class MinByTimeWindowTestCase {
         inputHandler.send(new Object[]{"YAHOO", 32f, 8});
         Thread.sleep(1100);
         executionPlanRuntime.shutdown();
-        Assert.assertEquals(4, inEventCount);
+        Assert.assertEquals(5, inEventCount);
         Assert.assertEquals(2, removeEventCount);
     }
 

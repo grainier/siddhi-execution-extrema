@@ -25,7 +25,8 @@ import org.wso2.siddhi.query.api.expression.Expression;
 import java.util.List;
 import java.util.Map;
 
-public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
+public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
+    protected String timeBatchWindowType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
     private StreamEvent resetEvent = null;
@@ -36,7 +37,6 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent = null;
     private StreamEvent expiredEvent = null;
-    protected String timeBatchWindowType;
 
     public void setTimeInMilliSeconds(long timeInMilliSeconds) {
         this.timeInMilliSeconds = timeInMilliSeconds;
@@ -65,10 +65,12 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                 } else if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.LONG) {
                     timeInMilliSeconds = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
                 } else {
-                    throw new ExecutionPlanValidationException("Time Batch window's parameter attribute should be either int or long, but found " + attributeExpressionExecutors[1].getReturnType());
+                    throw new ExecutionPlanValidationException("Time Batch window's parameter attribute should be either int or long, but found " +
+                            attributeExpressionExecutors[1].getReturnType());
                 }
             } else {
-                throw new ExecutionPlanValidationException("Time Batch window should have constant parameter attribute but found a dynamic attribute " + attributeExpressionExecutors[1].getClass().getCanonicalName());
+                throw new ExecutionPlanValidationException("Time Batch window should have constant parameter attribute but found a dynamic attribute " +
+                        attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else if (attributeExpressionExecutors.length == 3) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
@@ -105,7 +107,7 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                 startTime = Long.parseLong(String.valueOf(((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue()));
             }
         } else {
-            throw new ExecutionPlanValidationException( timeBatchWindowType +" should only have two or three parameters. but found " +
+            throw new ExecutionPlanValidationException(timeBatchWindowType + " should only have two or three parameters. but found " +
                     attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -139,18 +141,17 @@ public abstract class MinByMaxByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (timeBatchWindowType.equals(Constants.MIN_BY)){
-                    currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
-                }
-                else if (timeBatchWindowType.equals(Constants.MAX_BY)){
-                    currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent , currentEvent, sortByAttribute);
+                if (timeBatchWindowType.equals(Constants.MIN_BY)) {
+                    currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
+                } else if (timeBatchWindowType.equals(Constants.MAX_BY)) {
+                    currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }
             }
             streamEventChunk.clear();
             if (sendEvents) {
 
                 if (outputExpectsExpiredEvents) {
-                    if(expiredEvent != null){
+                    if (expiredEvent != null) {
                         expiredEvent.setTimestamp(currentTime);
                         streamEventChunk.add(expiredEvent);
                     }

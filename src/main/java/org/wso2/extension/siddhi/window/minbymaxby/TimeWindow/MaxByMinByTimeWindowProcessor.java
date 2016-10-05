@@ -24,14 +24,13 @@ import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.*;
 
-public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
+public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
 
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
     private volatile long lastTimestamp = Long.MIN_VALUE;
     private ExpressionExecutor sortByAttribute;
-    private TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap();
     private StreamEvent currentEvent;
     private StreamEvent expiredEvent;
     protected String timeWindowType;
@@ -96,7 +95,7 @@ public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor impl
                 streamEvent = streamEventChunk.next();
                 long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
                 //Get the set of entries
-                Set set = sortedEventMap.entrySet();
+                Set set = MaxByMinByExecutor.getSortedEventMap().entrySet();
                 // Get an iterator
                 Iterator iterator = set.iterator();
                 // Iterate through the sortedEventMap and remove the expired events
@@ -153,13 +152,13 @@ public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, sortedEventMap, streamEventCloner);
+        return finder.find(matchingEvent, MaxByMinByExecutor.getSortedEventMap(), streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(sortedEventMap, expression, matchingMetaStateHolder,
+        return OperatorParser.constructOperator(MaxByMinByExecutor.getSortedEventMap(), expression, matchingMetaStateHolder,
                 executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 
@@ -175,12 +174,12 @@ public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public Object[] currentState() {
-        return new Object[]{sortedEventMap};
+        return new Object[]{MaxByMinByExecutor.getSortedEventMap()};
     }
 
     @Override
     public void restoreState(Object[] state) {
-        this.sortedEventMap = ((TreeMap) state[0]);
+        MaxByMinByExecutor.setSortedEventMap((TreeMap) state[0]);
     }
 }
 

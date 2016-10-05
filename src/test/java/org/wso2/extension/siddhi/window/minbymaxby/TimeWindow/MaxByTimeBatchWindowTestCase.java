@@ -22,6 +22,9 @@ public class MaxByTimeBatchWindowTestCase {
         removeEventCount = 0;
         eventArrived = false;
     }
+    /**
+     * Commenting out intermittent failing test case until fix this properly.
+     */
     @Test
     public void maxbyTimeBatchWindowTest1() throws InterruptedException {
 
