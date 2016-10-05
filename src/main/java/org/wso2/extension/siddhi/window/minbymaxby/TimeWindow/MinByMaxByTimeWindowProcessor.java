@@ -1,5 +1,6 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
 import org.wso2.siddhi.core.event.state.StateEvent;
@@ -115,7 +116,7 @@ public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor impl
                     //clone the current stream event
                     //add the event to the sorted event map
                     StreamEvent clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                    sortedEventMap.put(sortByAttribute.execute(clonedEvent) , clonedEvent);
+                    MaxByMinByExecutor.insert(clonedEvent , sortByAttribute.execute(clonedEvent));
                     if (lastTimestamp < clonedEvent.getTimestamp()) {
                         scheduler.notifyAt(clonedEvent.getTimestamp() + timeInMilliSeconds);
                         lastTimestamp = clonedEvent.getTimestamp();
@@ -129,9 +130,9 @@ public abstract class MinByMaxByTimeWindowProcessor extends WindowProcessor impl
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
                 if (timeWindowType.equals(Constants.MIN_BY)){
-                    tempEvent = sortedEventMap.get(sortedEventMap.firstKey());
+                    tempEvent = MaxByMinByExecutor.getResult("MIN");
                 } else {
-                    tempEvent = sortedEventMap.get(sortedEventMap.lastKey());
+                    tempEvent = MaxByMinByExecutor.getResult("MAX");
                 }
                 if(tempEvent != currentEvent){
                     currentEvent = tempEvent;
