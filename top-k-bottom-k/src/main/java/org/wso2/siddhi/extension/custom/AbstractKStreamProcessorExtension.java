@@ -119,6 +119,7 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
             // Adding expired events
             if (outputExpectsExpiredEvents && expiredStreamEvent != null) {
                 outputStreamEventChunk.add(expiredStreamEvent);
+                expiredStreamEvent = null;
             }
 
             // Adding the reset event

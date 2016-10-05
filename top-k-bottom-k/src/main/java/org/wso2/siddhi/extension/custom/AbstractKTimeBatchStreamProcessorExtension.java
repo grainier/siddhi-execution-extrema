@@ -162,16 +162,15 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
                         // Adding the expired events
                         if (outputExpectsExpiredEvents && expiredStreamEvent != null) {
                             outputStreamEventChunk.add(expiredStreamEvent);
-                        }
-
-                        // Adding the reset event
-                        if (lastStreamEvent != null || expiredStreamEvent != null) {
-                            outputStreamEventChunk.add(resetEvent);
-                            resetEvent = null;
+                            expiredStreamEvent = null;
                         }
 
                         // Adding the last event with the topK frequencies for the window
                         if (lastStreamEvent != null) {
+                            // Adding the reset event
+                            outputStreamEventChunk.add(resetEvent);
+                            resetEvent = null;
+
                             Object[] outputStreamEventData = new Object[2 * querySize];
                             List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
                             int i = 0;

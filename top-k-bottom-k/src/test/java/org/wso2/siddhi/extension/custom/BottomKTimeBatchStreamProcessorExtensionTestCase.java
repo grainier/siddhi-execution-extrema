@@ -31,7 +31,7 @@ import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 
 public class BottomKTimeBatchStreamProcessorExtensionTestCase {
-    static final Logger log = Logger.getLogger(BottomKTimeBatchStreamProcessorExtensionTestCase.class);
+    private static final Logger log = Logger.getLogger(BottomKTimeBatchStreamProcessorExtensionTestCase.class);
     private volatile int count;
     private volatile boolean eventArrived;
 
@@ -48,38 +48,10 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
         String query = ("@info(name = 'query1') from inputStream#custom:bottomKTimeBatch(item, 1 sec, 3)  " +
-                "insert into outputStream;");
+                "insert all events into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
-        executionPlanRuntime.addCallback("query1", new QueryCallback() {
-            @Override
-            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
-                EventPrinter.print(timeStamp, inEvents, removeEvents);
-                eventArrived = true;
-                for (Event event : inEvents) {
-                    if (count == 0) {
-                        // Checking the if the topK elements are considered
-                        Assert.assertEquals("item3", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item2", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item1", event.getData(6));
-                        Assert.assertEquals(3L, event.getData(7));
-                    } else if (count == 1) {
-                        // Checking if the window had been reset
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertNull(event.getData(4));
-                        Assert.assertNull(event.getData(5));
-                        Assert.assertNull(event.getData(6));
-                        Assert.assertNull(event.getData(7));
-                    } else {
-                        Assert.fail();
-                    }
-                    count++;
-                }
-            }
-        });
+        addQueryCallback(executionPlanRuntime);
 
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("inputStream");
         executionPlanRuntime.start();
@@ -94,11 +66,11 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 75});
         inputHandler.send(new Object[]{"item4", 13});
-        // Time Window reset twice
-        Thread.sleep(2100); // This is to test if in empty time batch windows processor does not emit any events
+        // To get all the expired events
+        Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(2, count);
+        Assert.assertEquals(3, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
@@ -110,38 +82,10 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
         String query = ("@info(name = 'query1') from inputStream#custom:bottomKTimeBatch(item, 1000, 3, 1000)  " +
-                "insert into outputStream;");
+                "insert all events into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
-        executionPlanRuntime.addCallback("query1", new QueryCallback() {
-            @Override
-            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
-                EventPrinter.print(timeStamp, inEvents, removeEvents);
-                eventArrived = true;
-                for (Event event : inEvents) {
-                    if (count == 0) {
-                        // Checking the if the topK elements are considered
-                        Assert.assertEquals("item3", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item2", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item1", event.getData(6));
-                        Assert.assertEquals(3L, event.getData(7));
-                    } else if (count == 1) {
-                        // Checking if the window had been reset
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertNull(event.getData(4));
-                        Assert.assertNull(event.getData(5));
-                        Assert.assertNull(event.getData(6));
-                        Assert.assertNull(event.getData(7));
-                    } else {
-                        Assert.fail();
-                    }
-                    count++;
-                }
-            }
-        });
+        addQueryCallback(executionPlanRuntime);
 
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("inputStream");
         executionPlanRuntime.start();
@@ -161,10 +105,71 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 65});
         inputHandler.send(new Object[]{"item4", 23});
+        // To get all the expired events
+        Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(2, count);
+        Assert.assertEquals(3, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
+    }
+
+    private void addQueryCallback(ExecutionPlanRuntime executionPlanRuntime) {
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                eventArrived = true;
+                if (count == 0) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item3", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item2", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item1", event.getData(6));
+                        Assert.assertEquals(3L, event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNull(removeEvents);
+                } else if (count == 1) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertNull(event.getData(4));
+                        Assert.assertNull(event.getData(5));
+                        Assert.assertNull(event.getData(6));
+                        Assert.assertNull(event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNotNull(removeEvents);
+                    for (Event event : removeEvents) {
+                        Assert.assertEquals("item3", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item2", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item1", event.getData(6));
+                        Assert.assertEquals(3L, event.getData(7));
+                        Assert.assertTrue(event.isExpired());
+                    }
+                } else if (count == 2) {
+                    Assert.assertNull(inEvents);
+                    Assert.assertNotNull(removeEvents);
+                    for (Event event : removeEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertNull(event.getData(4));
+                        Assert.assertNull(event.getData(5));
+                        Assert.assertNull(event.getData(6));
+                        Assert.assertNull(event.getData(7));
+                        Assert.assertTrue(event.isExpired());
+                    }
+                } else {
+                    Assert.fail();
+                }
+                count++;
+            }
+        });
     }
 }

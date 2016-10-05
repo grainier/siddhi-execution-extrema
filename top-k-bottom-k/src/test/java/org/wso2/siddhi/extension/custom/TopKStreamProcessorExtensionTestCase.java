@@ -31,7 +31,7 @@ import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 
 public class TopKStreamProcessorExtensionTestCase {
-    static final Logger log = Logger.getLogger(TopKStreamProcessorExtensionTestCase.class);
+    private static final Logger log = Logger.getLogger(TopKStreamProcessorExtensionTestCase.class);
     private volatile int count;
     private volatile boolean eventArrived;
 
@@ -42,13 +42,13 @@ public class TopKStreamProcessorExtensionTestCase {
     }
 
     @Test
-    public void testTopKLengthBatchStreamProcessorExtension() throws InterruptedException {
+    public void testTopKStreamProcessorExtensionWithLengthBatch() throws InterruptedException {
         log.info("TopKStreamProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item int, price double);";
         String query = ("@info(name = 'query1') from inputStream#window.lengthBatch(6)#custom:topK(item, 3)  " +
-                "insert into outputStream;");
+                "insert all events into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
         executionPlanRuntime.addCallback("query1", new QueryCallback() {
@@ -56,28 +56,43 @@ public class TopKStreamProcessorExtensionTestCase {
             public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
                 EventPrinter.print(timeStamp, inEvents, removeEvents);
                 eventArrived = true;
-                for (Event event : inEvents) {
-                    if (count == 0) {
-                        // Checking the if the topK elements are considered
+                if (count == 0) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
                         Assert.assertEquals("item1", event.getData(2));
                         Assert.assertEquals(3L, event.getData(3));
                         Assert.assertEquals("item2", event.getData(4));
                         Assert.assertEquals(2L, event.getData(5));
                         Assert.assertEquals("item3", event.getData(6));
                         Assert.assertEquals(1L, event.getData(7));
-                    } else if (count == 1) {
-                        // Checking if the window had been reset
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNull(removeEvents);
+                } else if (count == 1) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
                         Assert.assertEquals("item4", event.getData(2));
                         Assert.assertEquals(2L, event.getData(3));
                         Assert.assertEquals("item5", event.getData(4));
                         Assert.assertEquals(2L, event.getData(5));
                         Assert.assertEquals("item6", event.getData(6));
                         Assert.assertEquals(2L, event.getData(7));
-                    } else {
-                        Assert.fail();
+                        Assert.assertFalse(event.isExpired());
                     }
-                    count++;
+                    Assert.assertNotNull(removeEvents);
+                    for (Event event : removeEvents) {
+                        Assert.assertEquals("item1", event.getData(2));
+                        Assert.assertEquals(3L, event.getData(3));
+                        Assert.assertEquals("item2", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item3", event.getData(6));
+                        Assert.assertEquals(1L, event.getData(7));
+                        Assert.assertTrue(event.isExpired());
+                    }
+                } else {
+                    Assert.fail();
                 }
+                count++;
             }
         });
 

@@ -16,10 +16,10 @@
 # under the License.
 #
 
-topK=org.wso2.siddhi.extension.custom.impl.TopKStreamProcessorExtension
-bottomK=org.wso2.siddhi.extension.custom.impl.BottomKStreamProcessorExtension
+topK=org.wso2.siddhi.extension.custom.TopKStreamProcessorExtension
+bottomK=org.wso2.siddhi.extension.custom.BottomKStreamProcessorExtension
 
-topKLengthBatch=org.wso2.siddhi.extension.custom.impl.TopKLengthBatchStreamProcessorExtension
-topKTimeBatch=org.wso2.siddhi.extension.custom.impl.TopKTimeBatchStreamProcessorExtension
-bottomKLengthBatch=org.wso2.siddhi.extension.custom.impl.BottomKLengthBatchStreamProcessorExtension
-bottomKTimeBatch=org.wso2.siddhi.extension.custom.impl.BottomKTimeBatchStreamProcessorExtension
+topKLengthBatch=org.wso2.siddhi.extension.custom.TopKLengthBatchStreamProcessorExtension
+topKTimeBatch=org.wso2.siddhi.extension.custom.TopKTimeBatchStreamProcessorExtension
+bottomKLengthBatch=org.wso2.siddhi.extension.custom.BottomKLengthBatchStreamProcessorExtension
+bottomKTimeBatch=org.wso2.siddhi.extension.custom.BottomKTimeBatchStreamProcessorExtension
