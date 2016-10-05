@@ -53,7 +53,7 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     private ComplexEventChunk<StreamEvent> currentEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
     private VariableExpressionExecutor[] variableExpressionExecutors;
-   // private MaxByMinByExecutor maxByMinByExecutor;
+
     private StreamEvent oldEvent;
     private StreamEvent resultEvent;
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
@@ -66,27 +66,21 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-        //maxByMinByExecutor = new MaxByMinByExecutor();
+
         this.executionPlanContext = executionPlanContext;
         if (minByMaxByExecutorType == "MIN") {
             MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-
-            variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
-            if (attributeExpressionExecutors.length == 2) {
-                variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-                minBymaxByExecutorAttribute = variableExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
-        } else {
-            MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);;
-            variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
-            if (attributeExpressionExecutors.length == 2) {
-                variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-                minBymaxByExecutorAttribute = variableExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
-
+        }else{
+                MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
+
+            variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
+            if (attributeExpressionExecutors.length == 2) {
+                variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
+                minBymaxByExecutorAttribute = variableExpressionExecutors[0];
+                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
+            }
+
     }
 
     @Override
