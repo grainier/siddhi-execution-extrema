@@ -31,23 +31,26 @@ import java.util.TreeMap;
  * Created by mathuriga on 29/09/16.
  */
 public class MaxByMinByExecutor  {
-    private String functionType;
 
-    private static TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
-    public String getFunctionType() {
-        return functionType;
-    }
 
-    public void setFunctionType(String functionType) {
-        this.functionType = functionType;
-    }
-
+    private static String minByMaxByExecutorType;
+    private static TreeMap<Object, StreamEvent> sortedEventMap;
     public static TreeMap<Object, StreamEvent> getSortedEventMap() {
         return sortedEventMap;
     }
     public static void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
         MaxByMinByExecutor.sortedEventMap = sortedEventMap;
     }
+
+    public static String getMinByMaxByExecutorType() {
+        return minByMaxByExecutorType;
+    }
+
+
+    public static void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
+        MaxByMinByExecutor.minByMaxByExecutorType = minByMaxByExecutorType;
+    }
+
 
     /**
      * To insert the current event into treemap .
