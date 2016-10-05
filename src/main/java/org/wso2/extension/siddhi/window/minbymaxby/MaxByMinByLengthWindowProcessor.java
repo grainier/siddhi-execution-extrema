@@ -74,18 +74,14 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         MaxByMinByExecutor.setSortedEventMap(new TreeMap<Object, StreamEvent>());
         if (minByMaxByExecutorType == "MIN") {
             MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-            if (attributeExpressionExecutors.length == 2) {
-                minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
-        } else {
+        }else {
             MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        }
             if (attributeExpressionExecutors.length == 2) {
                 minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
                 length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
             }
 
-        }
     }
 
 
