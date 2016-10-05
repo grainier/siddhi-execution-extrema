@@ -24,8 +24,13 @@ import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.*;
 
+/**
+ * Abstract class which gives the min/max event in a Time Window
+ */
+
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
 
+    protected String timeWindowType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
@@ -33,11 +38,6 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent;
     private StreamEvent expiredEvent;
-    protected String timeWindowType;
-
-    public void setTimeInMilliSeconds(long timeInMilliSeconds) {
-        this.timeInMilliSeconds = timeInMilliSeconds;
-    }
 
     @Override
     public Scheduler getScheduler() {
@@ -81,8 +81,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                         attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else {
-            throw new ExecutionPlanValidationException("Invalid no of arguments passed to "+
-                    timeWindowType+ ", " +
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to " +
+                    timeWindowType + ", " +
                     "required 2, but found " + attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -99,8 +99,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                 // Get an iterator
                 Iterator iterator = set.iterator();
                 // Iterate through the sortedEventMap and remove the expired events
-                while(iterator.hasNext()) {
-                    Map.Entry entry = (Map.Entry)iterator.next();
+                while (iterator.hasNext()) {
+                    Map.Entry entry = (Map.Entry) iterator.next();
                     StreamEvent expiredEvent = (StreamEvent) entry.getValue();
                     long timeDiff = expiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
@@ -115,34 +115,33 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     //clone the current stream event
                     //add the event to the sorted event map
                     StreamEvent clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                    MaxByMinByExecutor.insert(clonedEvent , sortByAttribute.execute(clonedEvent));
+                    MaxByMinByExecutor.insert(clonedEvent, sortByAttribute.execute(clonedEvent));
                     if (lastTimestamp < clonedEvent.getTimestamp()) {
                         scheduler.notifyAt(clonedEvent.getTimestamp() + timeInMilliSeconds);
                         lastTimestamp = clonedEvent.getTimestamp();
                     }
-                }
-                else {
+                } else {
                     streamEventChunk.remove();
                 }
             }
             streamEventChunk.clear();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (timeWindowType.equals(Constants.MIN_BY)){
+                if (timeWindowType.equals(Constants.MIN_BY)) {
                     tempEvent = MaxByMinByExecutor.getResult("MIN");
                 } else {
                     tempEvent = MaxByMinByExecutor.getResult("MAX");
                 }
-                if(tempEvent != currentEvent){
+                if (tempEvent != currentEvent) {
                     currentEvent = tempEvent;
                     expiredEvent = currentEvent;
-                    if(currentEvent != null){
+                    if (currentEvent != null) {
                         streamEventChunk.add(currentEvent);
                     }
                 }
             }
-            if (outputExpectsExpiredEvents){
-                if (expiredEvent != null && expiredEvent.getType() == StreamEvent.Type.EXPIRED){
+            if (outputExpectsExpiredEvents) {
+                if (expiredEvent != null && expiredEvent.getType() == StreamEvent.Type.EXPIRED) {
                     streamEventChunk.add(expiredEvent);
                 }
             }

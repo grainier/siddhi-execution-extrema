@@ -25,6 +25,10 @@ import org.wso2.siddhi.query.api.expression.Expression;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Abstract class which gives the min/max event in a Time Batch Window
+ */
+
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
     protected String timeBatchWindowType;
     private long timeInMilliSeconds;
@@ -37,10 +41,6 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent = null;
     private StreamEvent expiredEvent = null;
-
-    public void setTimeInMilliSeconds(long timeInMilliSeconds) {
-        this.timeInMilliSeconds = timeInMilliSeconds;
-    }
 
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
