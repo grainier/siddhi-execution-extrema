@@ -54,10 +54,10 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     private ExecutionPlanContext executionPlanContext;
     private VariableExpressionExecutor[] variableExpressionExecutors;
     private MaxByMinByExecutor maxByMinByExecutor;
-    private StreamEvent oldevent;
-    private StreamEvent resultevent;
-
+    private StreamEvent oldEvent;
+    private StreamEvent resultEvent;
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
+    private StreamEvent toExpireEvent;
 
     public MaxByMinByLengthBatchWindowProcessor() {
 
@@ -91,57 +91,43 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         List<ComplexEventChunk<StreamEvent>> streamEventChunks = new ArrayList<ComplexEventChunk<StreamEvent>>();
-
         synchronized (this) {
-
             ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
-            //clear the outputStream for every lengthBatch
-//            if (count == 0) {
-//                outputStreamEventChunk.clear();
-//                resultStreamEventChunk.clear();
-//
-//            }
-
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
-
-                //get the parameter value for every events
-                Object parameterValue = getParameterValue(functionParameter, streamEvent);
-                StreamEvent currentevent = streamEventCloner.copyStreamEvent(streamEvent);
+                StreamEvent currentEvent = streamEventCloner.copyStreamEvent(streamEvent);
 
                 if (count == 0) {
                     outputStreamEventChunk.clear();
                     resultStreamEventChunk.clear();
-                    oldevent=currentevent;
-
+                    oldEvent=null;
+                    //clonedResultEvent=resultEvent;
                 }
 
-                //currentEventChunk.add(clonedStreamEvent);
-                //put the value to treemap
-
-                //maxByMinByExecutor.insert(currentevent, parameterValue);
                 if(functionType=="MAX") {
-                    resultevent = maxByMinByExecutor.getMaxEventBatchProcessor(currentevent, oldevent, functionParameter);
-                    oldevent=resultevent;
+                    resultEvent = maxByMinByExecutor.getMaxEventBatchProcessor(currentEvent, oldEvent, functionParameter);
+                    oldEvent=resultEvent;
                 }
                 else if (functionType=="MIN"){
-                    resultevent=maxByMinByExecutor.getMaxEventBatchProcessor(currentevent,oldevent,functionParameter);
-                    oldevent=resultevent;
+                    resultEvent=maxByMinByExecutor.getMinEventBatchProcessor(currentEvent,oldEvent,functionParameter);
+                    oldEvent=resultEvent;
                 }
 
                 count++;
                 if (count == length) {
-                    count = 0;
                     //get the results
-
-//                    outputStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
-//                    resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
-                      outputStreamEventChunk.add(resultevent);
-                      resultStreamEventChunk.add(resultevent);
-
-                    System.out.println(resultevent);
-                    //maxByMinByExecutor.getSortedEventMap().clear();
+                     if(resultEvent!=null){
+                         if(toExpireEvent!=null) {
+                             outputStreamEventChunk.add(toExpireEvent);
+                             //resultStreamEventChunk.add(resultEvent);
+                         }
+                         outputStreamEventChunk.add(resultEvent);
+                         toExpireEvent=streamEventCloner.copyStreamEvent(resultEvent);
+                         toExpireEvent.setType(StreamEvent.Type.EXPIRED);
+                         System.out.println(outputStreamEventChunk);
+                     }
+                    count = 0;
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
                     }
@@ -155,7 +141,6 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
 
     }
-
 
 
     @Override
@@ -193,7 +178,7 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     public StreamEvent find(StateEvent stateEvent, Finder finder) {
-        return finder.find(stateEvent, resultStreamEventChunk, streamEventCloner);
+        return finder.find(stateEvent, toExpireEvent, streamEventCloner);
     }
 
     @Override

@@ -30,7 +30,7 @@ import java.util.TreeMap;
 /**
  * Created by mathuriga on 29/09/16.
  */
-public class MaxByMinByExecutor {
+public class MaxByMinByExecutor  {
     private String functionType;
 
     private static TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
@@ -90,28 +90,14 @@ public class MaxByMinByExecutor {
     public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor minByAttribute) {
         StreamEvent minEvent = oldEvent;
         if (minEvent != null) {
-            Attribute.Type attributeType = minByAttribute.getReturnType();
-            switch (attributeType) {
-                case DOUBLE:
-                    if ((Double) minByAttribute.execute(currentEvent) <= (Double) minByAttribute.execute(minEvent)) {
-                        minEvent = currentEvent;
-                    }
-                    break;
-                case FLOAT:
-                    if ((Float) minByAttribute.execute(currentEvent) <= (Float) minByAttribute.execute(minEvent)) {
-                        minEvent = currentEvent;
-                    }
-                    break;
-                case LONG:
-                    if ((Long) minByAttribute.execute(currentEvent) <= (Long) minByAttribute.execute(minEvent)) {
-                        minEvent = currentEvent;
-                    }
-                    break;
-                default:
-                    if ((Integer) minByAttribute.execute(currentEvent) <= (Integer) minByAttribute.execute(minEvent)) {
-                        minEvent = currentEvent;
-                    }
-                    break;
+            Object minEventValue = minByAttribute.execute(minEvent);
+            Object currentEventValue=minByAttribute.execute(currentEvent);
+            if(minEventValue instanceof  Comparable && currentEventValue instanceof Comparable) {
+                Comparable minValue = (Comparable) minEventValue;
+                Comparable currentValue=(Comparable) currentEventValue;
+                if(currentValue.compareTo(minValue)<=0){
+                    minEvent=currentEvent;
+                }
             }
         } else {
             minEvent = currentEvent;
@@ -131,28 +117,14 @@ public class MaxByMinByExecutor {
     public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
-            Attribute.Type attributeType = maxByAttribute.getReturnType();
-            switch (attributeType) {
-                case DOUBLE:
-                    if ((Double) maxByAttribute.execute(currentEvent) >= (Double) maxByAttribute.execute(maxEvent)) {
-                        maxEvent = currentEvent;
-                    }
-                    break;
-                case FLOAT:
-                    if ((Float) maxByAttribute.execute(currentEvent) >= (Float) maxByAttribute.execute(maxEvent)) {
-                        maxEvent = currentEvent;
-                    }
-                    break;
-                case LONG:
-                    if ((Long) maxByAttribute.execute(currentEvent) >= (Long) maxByAttribute.execute(maxEvent)) {
-                        maxEvent = currentEvent;
-                    }
-                    break;
-                default:
-                    if ((Integer) maxByAttribute.execute(currentEvent) >= (Integer) maxByAttribute.execute(maxEvent)) {
-                        maxEvent = currentEvent;
-                    }
-                    break;
+            Object maxEventValue=maxByAttribute.execute(maxEvent);
+            Object currentEventValue=maxByAttribute.execute(currentEvent);
+            if(maxEventValue instanceof Comparable && currentEventValue instanceof Comparable){
+                Comparable maxValue=(Comparable) maxEventValue;
+                Comparable currentValue=(Comparable) currentEventValue;
+                if(currentValue.compareTo(maxValue)>=0){
+                    maxEvent=currentEvent;
+                }
             }
         } else {
             maxEvent = currentEvent;
