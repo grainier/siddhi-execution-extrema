@@ -255,11 +255,12 @@ public class MaxByLengthWindowProcessorTestCase {
             InputHandler twitterStreamHandler = executionPlanRuntime.getInputHandler("twitterStream");
             executionPlanRuntime.start();
 
-            cseEventStreamHandler.send(new Object[]{"WSO2", 700f, 14});
-            cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 10f, 14});
+            cseEventStreamHandler.send(new Object[]{"AAA", 60.5f, 2});
 
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
+            twitterStreamHandler.send(new Object[]{104, "Hello CEP", "WSO2"});
 
 //            cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
 //            cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
@@ -308,9 +309,11 @@ public class MaxByLengthWindowProcessorTestCase {
 
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
+            System.out.println(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
 
             cseEventStreamHandler.send(new Object[]{"WSO2", 900f, 14});
-            cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
+            System.out.println("------------------------------------");
+            cseEventStreamHandler.send(new Object[]{"XXX", 70.5f, 2});
 
 //          cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
 //          cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
