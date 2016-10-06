@@ -33,22 +33,22 @@ import java.util.TreeMap;
 public class MaxByMinByExecutor  {
 
 
-    private static String minByMaxByExecutorType;
-    private static TreeMap<Object, StreamEvent> sortedEventMap;
-    public static TreeMap<Object, StreamEvent> getSortedEventMap() {
+    private  String minByMaxByExecutorType;
+    private  TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
+    public  TreeMap<Object, StreamEvent> getSortedEventMap() {
         return sortedEventMap;
     }
-    public static void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
-        MaxByMinByExecutor.sortedEventMap = sortedEventMap;
-    }
+//    public  void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
+//        MaxByMinByExecutor.sortedEventMap = sortedEventMap;
+//    }
 
-    public static String getMinByMaxByExecutorType() {
+    public  String getMinByMaxByExecutorType() {
         return minByMaxByExecutorType;
     }
 
 
-    public static void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
-        MaxByMinByExecutor.minByMaxByExecutorType = minByMaxByExecutorType;
+    public  void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
+        this.minByMaxByExecutorType = minByMaxByExecutorType;
     }
 
 
@@ -58,7 +58,7 @@ public class MaxByMinByExecutor  {
      * @param clonedStreamEvent copy of current event
      * @param parameterValue    key for the treemap(object which holds the parameter value)
      */
-    public static void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
+    public  void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
         sortedEventMap.put(parameterValue, clonedStreamEvent);
     }
 
@@ -69,7 +69,7 @@ public class MaxByMinByExecutor  {
      * @return outputEvent
      */
 
-    public static StreamEvent getResult(String functionType) {
+    public  StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
         if (functionType.equals("MIN")) {
             Object minEventKey = sortedEventMap.firstKey();
