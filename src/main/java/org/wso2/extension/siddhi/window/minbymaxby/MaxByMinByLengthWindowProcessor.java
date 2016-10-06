@@ -34,6 +34,8 @@ import org.wso2.siddhi.core.table.EventTable;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
 import org.wso2.siddhi.core.util.parser.OperatorParser;
+import org.wso2.siddhi.query.api.definition.Attribute;
+import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
 //import org.wso2.siddhi.core.util.collection.operator.Finder;
 //import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
@@ -77,7 +79,32 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         }else {
             MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
-            if (attributeExpressionExecutors.length == 2) {
+
+        if (attributeExpressionExecutors.length != 2) {
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+                    "required 2, but found " + attributeExpressionExecutors.length);
+        }
+
+        Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+        if (!((attributeType == Attribute.Type.DOUBLE)
+                || (attributeType == Attribute.Type.INT)
+                || (attributeType == Attribute.Type.STRING)
+                || (attributeType == Attribute.Type.FLOAT)
+                || (attributeType == Attribute.Type.LONG))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING +
+                    ", but found " + attributeType.toString());
+        }
+        attributeType = attributeExpressionExecutors[1].getReturnType();
+        if (!((attributeType == Attribute.Type.LONG)
+                || (attributeType == Attribute.Type.INT))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    ", but found " + attributeType.toString());
+        }
+
+        if (attributeExpressionExecutors.length == 2) {
                 minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
                 length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
             }
@@ -175,14 +202,16 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
 
     @Override
     public Object[] currentState() {
-        return new Object[]{new AbstractMap.SimpleEntry<String, Object>("ExpiredEventChunk", expiredEventChunk.getFirst()), new AbstractMap.SimpleEntry<String, Object>("Count", count)};
+        return new Object[]{new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", expiredResultEvent), new AbstractMap.SimpleEntry<String, Object>("Count", count)};
     }
 
     @Override
     public void restoreState(Object[] state) {
-        expiredEventChunk.clear();
+        //expiredEventChunk.clear();
+        expiredResultEvent=null;
         Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
-        expiredEventChunk.add((StreamEvent) stateEntry.getValue());
+        expiredResultEvent=(StreamEvent) stateEntry.getValue();
+        //expiredEventChunk.add((StreamEvent) stateEntry.getValue());
         Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
         count = (Integer) stateEntry2.getValue();
     }
