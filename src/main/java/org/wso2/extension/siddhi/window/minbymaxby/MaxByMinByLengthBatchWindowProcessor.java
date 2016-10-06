@@ -36,6 +36,8 @@ import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
 //import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 import org.wso2.siddhi.core.util.parser.OperatorParser;
+import org.wso2.siddhi.query.api.definition.Attribute;
+import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.ArrayList;
@@ -72,6 +74,30 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
             MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }else{
                 MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        }
+
+        if (attributeExpressionExecutors.length != 2) {
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:maxByLength() or minbymaxby:maxByLengthBatch() window, " +
+                    "required 2, but found " + attributeExpressionExecutors.length);
+        }
+
+        Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+        if (!((attributeType == Attribute.Type.DOUBLE)
+                || (attributeType == Attribute.Type.INT)
+                || (attributeType == Attribute.Type.STRING)
+                || (attributeType == Attribute.Type.FLOAT)
+                || (attributeType == Attribute.Type.LONG))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:maxByLengthBatch() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING +
+                    ", but found " + attributeType.toString());
+        }
+        attributeType = attributeExpressionExecutors[1].getReturnType();
+        if (!((attributeType == Attribute.Type.LONG)
+                || (attributeType == Attribute.Type.INT))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:maxByLengthBatch() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    ", but found " + attributeType.toString());
         }
 
             variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
