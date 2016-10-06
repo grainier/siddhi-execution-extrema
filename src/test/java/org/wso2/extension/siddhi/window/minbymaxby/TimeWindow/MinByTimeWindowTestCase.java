@@ -8,6 +8,7 @@ import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
+import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
 
 public class MinByTimeWindowTestCase {
@@ -231,7 +232,91 @@ public class MinByTimeWindowTestCase {
         Assert.assertEquals(5, inEventCount);
         Assert.assertEquals(2, removeEventCount);
     }
+    @Test
+    public void minbyTimeWindowTest5() throws InterruptedException {
+        SiddhiManager siddhiManager = new SiddhiManager();
+        String streams = "" +
+                "define stream cseEventStream (symbol string, price float, volume int); " +
+                "define stream twitterStream (user string, tweet string, company string); ";
+        String query = "" +
+                "@info(name = 'query1') " +
+                "from twitterStream#window.minbymaxby:minbytime(company,1 sec) join cseEventStream#window.length(2) " +
+                "on cseEventStream.symbol == twitterStream.company " +
+                "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
+                "insert into outputStream ;";
 
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
+        try {
+
+            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+                @Override
+                public void receive(Event[] events) {
+                    EventPrinter.print(events);
+                }
+            });
+            InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
+            InputHandler twitterStreamHandler = executionPlanRuntime.getInputHandler("twitterStream");
+            executionPlanRuntime.start();
+            cseEventStreamHandler.send(new Object[]{"IBM", 75.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+
+            twitterStreamHandler.send(new Object[]{"User2", "Hi", "IBM"});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
+
+            Thread.sleep(1500);
+//            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
+//            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+//            Thread.sleep(1000);
+            //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
+            Assert.assertEquals(0, removeEventCount);
+//            Assert.assertTrue(eventArrived);
+        } finally {
+            executionPlanRuntime.shutdown();
+        }
+    }
+
+    @Test
+    public void minbyTimeWindowTest7() throws InterruptedException {
+        SiddhiManager siddhiManager = new SiddhiManager();
+        String streams = "" +
+                "define stream cseEventStream (symbol string, price float, volume int); " +
+                "define stream twitterStream (user string, tweet string, company string); ";
+        String query = "" +
+                "@info(name = 'query1') " +
+                "from twitterStream#window.minbymaxby:minbytime(company,1 minute) join cseEventStream#window.minbymaxby:minbytime(price,1 sec) " +
+                "on cseEventStream.symbol == twitterStream.company " +
+                "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
+                "insert into outputStream ;";
+
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
+        try {
+
+            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+                @Override
+                public void receive(Event[] events) {
+                    EventPrinter.print(events);
+                }
+            });
+            InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
+            InputHandler twitterStreamHandler = executionPlanRuntime.getInputHandler("twitterStream");
+            executionPlanRuntime.start();
+            cseEventStreamHandler.send(new Object[]{"IBM", 25.0f, 100});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+
+            twitterStreamHandler.send(new Object[]{"User2", "Hi", "IBM"});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
+
+            Thread.sleep(1500);
+//            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
+//            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+//            Thread.sleep(1000);
+            //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
+            Assert.assertEquals(0, removeEventCount);
+//            Assert.assertTrue(eventArrived);
+        } finally {
+            executionPlanRuntime.shutdown();
+        }
+    }
 
 }
 

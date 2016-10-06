@@ -40,6 +40,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent;
     private StreamEvent expiredEvent;
+    private ComplexEventChunk<StreamEvent> expiredEventChunk;
+    private MaxByMinByExecutor maxByMinByExecutor;
 
     @Override
     public Scheduler getScheduler() {
@@ -54,6 +56,9 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
+        this.maxByMinByExecutor = new MaxByMinByExecutor();
+        maxByMinByExecutor.setSortedEventMap(new TreeMap<Object, StreamEvent>());
+        expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
             sortByAttribute = attributeExpressionExecutors[0];
@@ -137,8 +142,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     tempEvent = MaxByMinByExecutor.getResult("MAX");
                 }
                 if (tempEvent != currentEvent) {
-                    currentEvent = tempEvent;
                     expiredEvent = currentEvent;
+                    currentEvent = tempEvent;
                     if (currentEvent != null) {
                         streamEventChunk.add(currentEvent);
                     }
@@ -149,19 +154,23 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     streamEventChunk.add(expiredEvent);
                 }
             }
+            if (expiredEvent != null){
+                expiredEventChunk.clear();
+                expiredEventChunk.add(expiredEvent);
+            }
         }
         nextProcessor.process(streamEventChunk);
     }
 
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, MaxByMinByExecutor.getSortedEventMap(), streamEventCloner);
+        return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(MaxByMinByExecutor.getSortedEventMap(), expression, matchingMetaStateHolder,
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,
                 executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 

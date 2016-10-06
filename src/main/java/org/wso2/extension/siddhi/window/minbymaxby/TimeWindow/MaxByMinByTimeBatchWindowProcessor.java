@@ -42,8 +42,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     private long startTime = 0;
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent = null;
-
-    ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
+    private ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
 
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
