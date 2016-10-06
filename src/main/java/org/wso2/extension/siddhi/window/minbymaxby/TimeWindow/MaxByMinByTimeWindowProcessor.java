@@ -14,7 +14,6 @@ import org.wso2.siddhi.core.query.processor.SchedulingProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.FindableProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.WindowProcessor;
 import org.wso2.siddhi.core.table.EventTable;
-import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.core.util.Scheduler;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
@@ -40,8 +39,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent;
     private StreamEvent expiredEvent;
-    private ComplexEventChunk<StreamEvent> expiredEventChunk;
-    private MaxByMinByExecutor maxByMinByExecutor;
+    protected String timeWindowType;
+    private MaxByMinByExecutor minByMaxByExecutor;
+
+
+    public void setTimeInMilliSeconds(long timeInMilliSeconds) {
+        this.timeInMilliSeconds = timeInMilliSeconds;
+    }
 
     @Override
     public Scheduler getScheduler() {
@@ -56,9 +60,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
-        this.maxByMinByExecutor = new MaxByMinByExecutor();
-        maxByMinByExecutor.setSortedEventMap(new TreeMap<Object, StreamEvent>());
-        expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
+        minByMaxByExecutor=new MaxByMinByExecutor();
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
             sortByAttribute = attributeExpressionExecutors[0];
@@ -104,7 +106,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                 streamEvent = streamEventChunk.next();
                 long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
                 //Get the set of entries
-                Set set = MaxByMinByExecutor.getSortedEventMap().entrySet();
+                Set set = minByMaxByExecutor.getSortedEventMap().entrySet();
                 // Get an iterator
                 Iterator iterator = set.iterator();
                 // Iterate through the sortedEventMap and remove the expired events
@@ -124,7 +126,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     //clone the current stream event
                     //add the event to the sorted event map
                     StreamEvent clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                    MaxByMinByExecutor.insert(clonedEvent, sortByAttribute.execute(clonedEvent));
+                    minByMaxByExecutor.insert(clonedEvent , sortByAttribute.execute(clonedEvent));
                     if (lastTimestamp < clonedEvent.getTimestamp()) {
                         scheduler.notifyAt(clonedEvent.getTimestamp() + timeInMilliSeconds);
                         lastTimestamp = clonedEvent.getTimestamp();
@@ -136,10 +138,10 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             streamEventChunk.clear();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (sortType.equals(Constants.MIN_BY)) {
-                    tempEvent = MaxByMinByExecutor.getResult("MIN");
+                if (timeWindowType.equals(Constants.MIN_BY)){
+                    tempEvent = minByMaxByExecutor.getResult("MIN");
                 } else {
-                    tempEvent = MaxByMinByExecutor.getResult("MAX");
+                    tempEvent = minByMaxByExecutor.getResult("MAX");
                 }
                 if (tempEvent != currentEvent) {
                     expiredEvent = currentEvent;
@@ -149,8 +151,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     }
                 }
             }
-            if (outputExpectsExpiredEvents) {
-                if (expiredEvent != null && expiredEvent.getType() == StreamEvent.Type.EXPIRED) {
+            if (outputExpectsExpiredEvents){
+                if (expiredEvent != null && expiredEvent.getType() == StreamEvent.Type.EXPIRED){
                     streamEventChunk.add(expiredEvent);
                 }
             }
@@ -164,13 +166,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
+        return finder.find(matchingEvent, minByMaxByExecutor.getSortedEventMap(), streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,
+        return OperatorParser.constructOperator(minByMaxByExecutor.getSortedEventMap(), expression, matchingMetaStateHolder,
                 executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 
@@ -186,12 +188,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public Object[] currentState() {
-        return new Object[]{MaxByMinByExecutor.getSortedEventMap()};
+        return new Object[]{minByMaxByExecutor.getSortedEventMap()};
     }
 
     @Override
     public void restoreState(Object[] state) {
-        MaxByMinByExecutor.setSortedEventMap((TreeMap) state[0]);
+
+        //minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
     }
 }
 
