@@ -42,7 +42,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     private long startTime = 0;
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent = null;
-    private StreamEvent expiredEvent = null;
+
+    ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
 
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
@@ -156,13 +157,19 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             streamEventChunk.clear();
             if (sendEvents) {
 
+
                 if (outputExpectsExpiredEvents) {
-                    if (expiredEvent != null) {
-                        expiredEvent.setTimestamp(currentTime);
-                        streamEventChunk.add(expiredEvent);
+                    if (expiredEventChunk.getFirst() != null) {
+                        while (expiredEventChunk.hasNext()) {
+                            StreamEvent expiredEvent = expiredEventChunk.next();
+                            expiredEvent.setTimestamp(currentTime);
+                        }
+                        streamEventChunk.add(expiredEventChunk.getFirst());
                     }
                 }
-                expiredEvent = null;
+                if (expiredEventChunk != null) {
+                    expiredEventChunk.clear();
+                }
                 if (currentEvent != null) {
 
                     // add reset event in front of current events
@@ -170,7 +177,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                     resetEvent = null;
                     StreamEvent toExpireEvent = streamEventCloner.copyStreamEvent(currentEvent);
                     toExpireEvent.setType(StreamEvent.Type.EXPIRED);
-                    expiredEvent = toExpireEvent;
+                    expiredEventChunk.add(toExpireEvent);
                     resetEvent = streamEventCloner.copyStreamEvent(currentEvent);
                     resetEvent.setType(ComplexEvent.Type.RESET);
                     streamEventChunk.add(currentEvent);
@@ -204,33 +211,48 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
 
     @Override
     public void start() {
-
+        //Do nothing
     }
 
     @Override
     public void stop() {
-
+        //Do nothing
     }
 
     @Override
     public Object[] currentState() {
-        return new Object[0];
+        if (expiredEventChunk != null) {
+            return new Object[]{currentEvent, expiredEventChunk.getFirst(), resetEvent};
+        } else {
+            return new Object[]{currentEvent, resetEvent};
+        }
     }
 
     @Override
     public void restoreState(Object[] state) {
-
+        if (state.length > 2) {
+            currentEvent = (StreamEvent)state[0];
+            expiredEventChunk.clear();
+            expiredEventChunk.add((StreamEvent) state[1]);
+            resetEvent = (StreamEvent) state[2];
+        } else {
+            currentEvent = (StreamEvent) state[0];
+            resetEvent = (StreamEvent) state[1];
+        }
     }
 
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, expiredEvent, streamEventCloner);
+        return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(expiredEvent, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
+        if (expiredEventChunk == null) {
+            expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
+        }
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 
 }

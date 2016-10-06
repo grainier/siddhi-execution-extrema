@@ -191,6 +191,7 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> list, Map<String, EventTable> map) {
+        ComplexEventChunk expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         return OperatorParser.constructOperator(resultStreamEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
     }
 }
