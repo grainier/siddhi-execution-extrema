@@ -36,6 +36,8 @@ import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
 //import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 import org.wso2.siddhi.core.util.parser.OperatorParser;
+import org.wso2.siddhi.query.api.definition.Attribute;
+import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.ArrayList;
@@ -48,12 +50,12 @@ import java.util.Map;
 public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implements FindableProcessor {
     private int length;
     private int count = 0;
-    protected String functionType;
-    private ExpressionExecutor functionParameter;
+    protected String minByMaxByExecutorType;
+    private ExpressionExecutor minBymaxByExecutorAttribute;
     private ComplexEventChunk<StreamEvent> currentEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
     private VariableExpressionExecutor[] variableExpressionExecutors;
-    private MaxByMinByExecutor maxByMinByExecutor;
+
     private StreamEvent oldEvent;
     private StreamEvent resultEvent;
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
@@ -66,26 +68,45 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-        maxByMinByExecutor = new MaxByMinByExecutor();
+
         this.executionPlanContext = executionPlanContext;
-        if (functionType == "MIN") {
-            maxByMinByExecutor.setFunctionType(functionType);
+        if (minByMaxByExecutorType == "MIN") {
+            MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        }else{
+                MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        }
+
+        if (attributeExpressionExecutors.length != 2) {
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:maxByLength() or minbymaxby:maxByLengthBatch() window, " +
+                    "required 2, but found " + attributeExpressionExecutors.length);
+        }
+
+        Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+        if (!((attributeType == Attribute.Type.DOUBLE)
+                || (attributeType == Attribute.Type.INT)
+                || (attributeType == Attribute.Type.STRING)
+                || (attributeType == Attribute.Type.FLOAT)
+                || (attributeType == Attribute.Type.LONG))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:maxByLengthBatch() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING +
+                    ", but found " + attributeType.toString());
+        }
+        attributeType = attributeExpressionExecutors[1].getReturnType();
+        if (!((attributeType == Attribute.Type.LONG)
+                || (attributeType == Attribute.Type.INT))) {
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:maxByLengthBatch() or minbymaxby:maxByLength() window, " +
+                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
+                    ", but found " + attributeType.toString());
+        }
+
             variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
             if (attributeExpressionExecutors.length == 2) {
                 variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-                functionParameter = variableExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
-        } else {
-            maxByMinByExecutor.setFunctionType(functionType);
-            variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
-            if (attributeExpressionExecutors.length == 2) {
-                variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-                functionParameter = variableExpressionExecutors[0];
+                minBymaxByExecutorAttribute = variableExpressionExecutors[0];
                 length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
             }
 
-        }
     }
 
     @Override
@@ -105,12 +126,12 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                     //clonedResultEvent=resultEvent;
                 }
 
-                if(functionType=="MAX") {
-                    resultEvent = maxByMinByExecutor.getMaxEventBatchProcessor(currentEvent, oldEvent, functionParameter);
+                if(minByMaxByExecutorType=="MAX") {
+                    resultEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(currentEvent, oldEvent, minBymaxByExecutorAttribute);
                     oldEvent=resultEvent;
                 }
-                else if (functionType=="MIN"){
-                    resultEvent=maxByMinByExecutor.getMinEventBatchProcessor(currentEvent,oldEvent,functionParameter);
+                else if (minByMaxByExecutorType=="MIN"){
+                    resultEvent=MaxByMinByExecutor.getMinEventBatchProcessor(currentEvent,oldEvent,minBymaxByExecutorAttribute);
                     oldEvent=resultEvent;
                 }
 
@@ -161,19 +182,6 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     @Override
     public void restoreState(Object[] state) {
 //
-    }
-
-    /**
-     * To find the parameter value of given parameter for each event .
-     *
-     * @param functionParameter name of the parameter of the event data
-     * @param streamEvent       event  at processor
-     * @return the parameterValue
-     */
-    public Object getParameterValue(ExpressionExecutor functionParameter, StreamEvent streamEvent) {
-        Object parameterValue;
-        parameterValue = functionParameter.execute(streamEvent);
-        return parameterValue;
     }
 
     @Override
