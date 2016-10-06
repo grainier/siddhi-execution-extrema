@@ -95,10 +95,10 @@ public class MaxByTimeWindowTestCase {
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
         inputHandler.send(new Object[]{"IBM", 700f, 1});
-        inputHandler.send(new Object[]{"IBM", 798f, 1});
-        inputHandler.send(new Object[]{"IBM", 432f, 1});
+        inputHandler.send(new Object[]{"MIT", 700f, 2});
+        inputHandler.send(new Object[]{"WSO2", 700f, 3});
         Thread.sleep(1100);
-        Assert.assertEquals(2, inEventCount);
+        Assert.assertEquals(3, inEventCount);
         Assert.assertEquals(0,removeEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
@@ -113,7 +113,7 @@ public class MaxByTimeWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:maxbytime(price, 1 sec) " +
+                "from cseEventStream#window.minbymaxby:maxbytime(symbol, 1 sec) " +
                 "select symbol, price " +
                 "insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
@@ -134,25 +134,22 @@ public class MaxByTimeWindowTestCase {
 
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
-        inputHandler.send(new Object[]{"IBM", 900f, 1});
-        inputHandler.send(new Object[]{"IBM", 800f, 1});
-        inputHandler.send(new Object[]{"IBM", 700f, 1});
-//        inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
-//        inputHandler.send(new Object[]{"MIT", 23.5f, 3});
-//        inputHandler.send(new Object[]{"GOOGLE", 45.5f, 4});
-//        Thread.sleep(1100);
-//        inputHandler.send(new Object[]{"ORACLE", 10f, 5});
-//        inputHandler.send(new Object[]{"WSO2", 34.5f, 6});
-//        inputHandler.send(new Object[]{"GOOGLE", 65.5f, 7});
-//        inputHandler.send(new Object[]{"MIT", 7.5f, 8});
-//        Thread.sleep(1100);
-//        inputHandler.send(new Object[]{"GOOGLE", 7f, 9});
-//        inputHandler.send(new Object[]{"WSO2", 60.5f, 10});
-//        inputHandler.send(new Object[]{"MIT", 632.5f, 11});
+        inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
+        inputHandler.send(new Object[]{"MIT", 23.5f, 3});
+        inputHandler.send(new Object[]{"GOOGLE", 45.5f, 4});
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"ORACLE", 10f, 5});
+        inputHandler.send(new Object[]{"WSO2", 34.5f, 6});
+        inputHandler.send(new Object[]{"GOOGLE", 65.5f, 7});
+        inputHandler.send(new Object[]{"MIT", 7.5f, 8});
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"GOOGLE", 7f, 9});
+        inputHandler.send(new Object[]{"WSO2", 60.5f, 10});
+        inputHandler.send(new Object[]{"MIT", 632.5f, 11});
         Thread.sleep(4000);
         executionPlanRuntime.shutdown();
-//        Assert.assertEquals(0,inEventCount);
-//        Assert.assertEquals(3, removeEventCount);
+        Assert.assertEquals(0,inEventCount);
+        Assert.assertEquals(3, removeEventCount);
 
     }
     @Test

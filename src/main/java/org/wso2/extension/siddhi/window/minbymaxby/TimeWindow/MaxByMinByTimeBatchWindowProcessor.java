@@ -18,6 +18,7 @@ import org.wso2.siddhi.core.table.EventTable;
 import org.wso2.siddhi.core.util.Scheduler;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
+import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
@@ -222,14 +223,14 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     }
 
     @Override
-    public StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return null;
+    public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
+        return finder.find(matchingEvent, expiredEvent, streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return null;
+        return OperatorParser.constructOperator(expiredEvent, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 
 }
