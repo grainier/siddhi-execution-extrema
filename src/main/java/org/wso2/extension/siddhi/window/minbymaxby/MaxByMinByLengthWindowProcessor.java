@@ -176,6 +176,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
                         outputStreamEventChunk.add(outputStreamEvent);
                         expiredResultEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
                         expiredResultEvent.setTimestamp(currentTime);
+                        
                         expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
                         expiredEventChunk.add(expiredResultEvent);
                         //resultStreamEventChunk.add(outputStreamEvent);
