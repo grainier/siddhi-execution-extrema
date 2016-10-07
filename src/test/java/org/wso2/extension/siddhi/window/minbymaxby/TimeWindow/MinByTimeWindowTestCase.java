@@ -283,7 +283,7 @@ public class MinByTimeWindowTestCase {
                 "define stream twitterStream (user string, tweet string, company string); ";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from twitterStream#window.minbymaxby:minbytime(company,1 minute) join cseEventStream#window.minbymaxby:minbytime(price,1 sec) " +
+                "from twitterStream#window.minbymaxby:maxbytime(company,1 sec) join cseEventStream#window.minbymaxby:minbytime(price,1 sec) " +
                 "on cseEventStream.symbol == twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert into outputStream ;";
@@ -302,14 +302,12 @@ public class MinByTimeWindowTestCase {
             executionPlanRuntime.start();
             cseEventStreamHandler.send(new Object[]{"IBM", 25.0f, 100});
             cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
-
             twitterStreamHandler.send(new Object[]{"User2", "Hi", "IBM"});
             twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-
             Thread.sleep(1500);
-//            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-//            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
-//            Thread.sleep(1000);
+            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
             Assert.assertEquals(0, removeEventCount);
 //            Assert.assertTrue(eventArrived);

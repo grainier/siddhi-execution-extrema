@@ -38,9 +38,9 @@ public class MaxByMinByExecutor  {
     public  TreeMap<Object, StreamEvent> getSortedEventMap() {
         return sortedEventMap;
     }
-//    public  void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
-//        MaxByMinByExecutor.sortedEventMap = sortedEventMap;
-//    }
+    public  void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
+        this.sortedEventMap = sortedEventMap;
+    }
 
     public  String getMinByMaxByExecutorType() {
         return minByMaxByExecutorType;
