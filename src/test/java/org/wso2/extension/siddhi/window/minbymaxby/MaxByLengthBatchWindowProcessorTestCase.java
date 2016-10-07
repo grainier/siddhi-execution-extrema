@@ -163,6 +163,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             inputHandler.send(new Object[]{"ABC", 60.5f, 2});
             inputHandler.send(new Object[]{"AAA", 700f, 142});
             inputHandler.send(new Object[]{"ACD", 60.5f, 21});
+            System.out.println("-------------------");
             inputHandler.send(new Object[]{"RTE", 700f, 1});
             inputHandler.send(new Object[]{"YTX", 60.5f, 24});
             inputHandler.send(new Object[]{"DGF", 60.5f, 21});

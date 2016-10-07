@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
+import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
@@ -248,7 +249,11 @@ public class MaxByLengthWindowProcessorTestCase {
                 public void receive(Event[] events) {
 
                     System.out.print("output event: ");
+//                    if(events==null){
+//                        System.out.println("There is no output events");
+//                    }
                     EventPrinter.print(events);
+
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -286,18 +291,24 @@ public class MaxByLengthWindowProcessorTestCase {
                 "from cseEventStream#window.minbymaxby:maxByLength(price, 2) join twitterStream#window.Length(2) " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
-                "insert all events into outputStream ;";
+                "insert events into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
-            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
+//            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+//
+//                @Override
+//                public void receive(Event[] events) {
+//
+//                    System.out.print("output event: ");
+//                    EventPrinter.print(events);
+//
+//                }
+//            });
+            executionPlanRuntime.addCallback("query1", new QueryCallback() {
                 @Override
-                public void receive(Event[] events) {
-
-                    System.out.print("output event: ");
-                    EventPrinter.print(events);
-
+                public void receive(long l, Event[] events, Event[] events1) {
+                    EventPrinter.print(l, events, events1);
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -309,6 +320,7 @@ public class MaxByLengthWindowProcessorTestCase {
 
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
+            Thread.sleep(100);
             System.out.println(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
 
             cseEventStreamHandler.send(new Object[]{"WSO2", 900f, 14});
