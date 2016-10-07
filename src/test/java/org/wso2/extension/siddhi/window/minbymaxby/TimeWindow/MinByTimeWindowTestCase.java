@@ -134,9 +134,12 @@ public class MinByTimeWindowTestCase {
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
         inputHandler.send(new Object[]{"IBM", 700f, 1});
+        Thread.sleep(100);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
-        inputHandler.send(new Object[]{"MIT", 23.5f, 3});
+        Thread.sleep(100);
         inputHandler.send(new Object[]{"GOOGLE", 45.5f, 4});
+        Thread.sleep(100);
+        inputHandler.send(new Object[]{"MIT", 23.5f, 3});
         Thread.sleep(2100);
         inputHandler.send(new Object[]{"ORACLE", 10f, 5});
         inputHandler.send(new Object[]{"WSO2", 34.5f, 6});
@@ -157,7 +160,7 @@ public class MinByTimeWindowTestCase {
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minbytime(price, 1 sec) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minbytime(price, 1 minute) select symbol,price," +
                 "volume insert expired events into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         executionPlanRuntime.addCallback("query1", new QueryCallback() {

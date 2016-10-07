@@ -114,19 +114,23 @@ private ComplexEventChunk<StreamEvent> expiredEventChunk;
                     StreamEvent expiredEvent = (StreamEvent) entry.getValue();
                     long timeDiff = expiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
-                        if(currentEvent == expiredEvent){
-                            expiredEvent.setType(StreamEvent.Type.EXPIRED);
-                            expiredEvent.setTimestamp(currentTime);
-                            streamEventChunk.insertBeforeCurrent(expiredEvent);
-                        }
+//                        if(currentEvent == expiredEvent){
+//                            expiredEvent.setType(StreamEvent.Type.EXPIRED);
+//                            expiredEvent.setTimestamp(currentTime);
+//                            streamEventChunk.insertBeforeCurrent(expiredEvent);
+//                        }
                         iterator.remove();
                     }
                 }
-                if(expiredEventChunk.hasNext()){
-                    StreamEvent toExpireEvent = expiredEventChunk.getFirst();
-                    long timeDiff = toExpireEvent.getTimestamp() - currentTime + timeInMilliSeconds;
+                expiredEventChunk.reset();
+                while(expiredEventChunk.hasNext()){
+                    StreamEvent toExpiredEvent = expiredEventChunk.next();
+                    long timeDiff = toExpiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
                         expiredEventChunk.remove();
+                        toExpiredEvent.setType(StreamEvent.Type.EXPIRED);
+                        toExpiredEvent.setTimestamp(currentTime);
+                        streamEventChunk.insertBeforeCurrent(toExpiredEvent);
                     }
                 }
 
@@ -143,6 +147,7 @@ private ComplexEventChunk<StreamEvent> expiredEventChunk;
 
                 streamEventChunk.remove();
             }
+            expiredEventChunk.reset();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
                 if (sortType.equals(Constants.MIN_BY)){
