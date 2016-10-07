@@ -57,11 +57,11 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
     private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
     private ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
     private ExecutionPlanContext executionPlanContext;
-    //private MaxByMinByExecutor maxByMinByExecutor;
+    private MaxByMinByExecutor maxByMinByExecutor;
     private StreamEvent outputStreamEvent;
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
-    StreamEvent expiredResultEvent=null;
+    StreamEvent expiredResultEvent = null;
 
 
 
@@ -70,14 +70,18 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
     }
 
 
+    @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+
         this.executionPlanContext = executionPlanContext;
-        //maxByMinByExecutor = new MaxByMinByExecutor();
-        MaxByMinByExecutor.setSortedEventMap(new TreeMap<Object, StreamEvent>());
+        this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
+        maxByMinByExecutor = new MaxByMinByExecutor();
+
+        // this.events=new ArrayList<StreamEvent>();
         if (minByMaxByExecutorType == "MIN") {
-            MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        }else {
-            MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+            maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        } else {
+            maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
 
         if (attributeExpressionExecutors.length != 2) {
@@ -105,9 +109,9 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         }
 
         if (attributeExpressionExecutors.length == 2) {
-                minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
+            minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
+            length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
+        }
 
     }
 
@@ -127,20 +131,23 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
 
                 //get the parameter value for every events
                 Object parameterValue = getParameterValue(minBymaxByExecutorAttribute, streamEvent);
-                MaxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
+                maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
                 //
 
                 //clonedEvent.setType(StreamEvent.Type.EXPIRED);
                 if (count < length) {
                     count++;
                     //get the output event
-                    setOutputStreamEvent(MaxByMinByExecutor.getResult(MaxByMinByExecutor.getMinByMaxByExecutorType()));
-                    if(expiredResultEvent!=null){
+                    setOutputStreamEvent(maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
+                    if (expiredResultEvent != null) {
                         outputStreamEventChunk.add(expiredResultEvent);
+                        expiredEventChunk.clear();
                     }
                     outputStreamEventChunk.add(outputStreamEvent);
-                    expiredResultEvent=streamEventCloner.copyStreamEvent(outputStreamEvent);
+                    expiredResultEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
+                    expiredResultEvent.setTimestamp(currentTime);
                     expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
+                    expiredEventChunk.add(expiredResultEvent);
 
                     System.out.println(outputStreamEventChunk);
                     if (outputStreamEventChunk.getFirst() != null) {
@@ -156,19 +163,22 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
                         //remove the expired event from treemap
                         Object expiredEventParameterValue = getParameterValue(minBymaxByExecutorAttribute, firstEvent);
 
-                        MaxByMinByExecutor.getSortedEventMap().remove(expiredEventParameterValue);
+                        maxByMinByExecutor.getSortedEventMap().remove(expiredEventParameterValue);
                         events.remove(0);
                         //
 
                         //get the output event
-                        setOutputStreamEvent(MaxByMinByExecutor.getResult(MaxByMinByExecutor.getMinByMaxByExecutorType()));
-                        if(expiredResultEvent!=null){
+                        setOutputStreamEvent(maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
+                        if (expiredResultEvent != null) {
                             outputStreamEventChunk.add(expiredResultEvent);
+                            expiredEventChunk.clear();
                         }
                         outputStreamEventChunk.add(outputStreamEvent);
-                        expiredResultEvent=streamEventCloner.copyStreamEvent(outputStreamEvent);
+                        expiredResultEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
+                        expiredResultEvent.setTimestamp(currentTime);
                         expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
-                      //  resultStreamEventChunk.add(maxByMinByExecutor.getResult(maxByMinByExecutor.getFunctionType()));
+                        expiredEventChunk.add(expiredResultEvent);
+                        //resultStreamEventChunk.add(outputStreamEvent);
 
                         System.out.println(outputStreamEventChunk);
                         if (outputStreamEventChunk.getFirst() != null) {
@@ -208,14 +218,13 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
     @Override
     public void restoreState(Object[] state) {
         //expiredEventChunk.clear();
-        expiredResultEvent=null;
+        expiredResultEvent = null;
         Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
-        expiredResultEvent=(StreamEvent) stateEntry.getValue();
+        expiredResultEvent = (StreamEvent) stateEntry.getValue();
         //expiredEventChunk.add((StreamEvent) stateEntry.getValue());
         Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
         count = (Integer) stateEntry2.getValue();
     }
-
 
 
     /**
@@ -233,13 +242,11 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
     }
 
 
-    @Override
-    public StreamEvent find(StateEvent stateEvent, Finder finder) {
-        return finder.find(stateEvent, expiredResultEvent, streamEventCloner);
+    public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
+        return finder.find(matchingEvent, this.expiredEventChunk, this.streamEventCloner);
     }
 
-    @Override
-    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> list, Map<String, EventTable> map) {
-        return OperatorParser.constructOperator(resultStreamEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
+    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
+        return OperatorParser.constructOperator(this.expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 }

@@ -52,14 +52,15 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     private int count = 0;
     protected String minByMaxByExecutorType;
     private ExpressionExecutor minBymaxByExecutorAttribute;
-    private ComplexEventChunk<StreamEvent> currentEventChunk = new ComplexEventChunk<StreamEvent>(false);
+    private ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
     private VariableExpressionExecutor[] variableExpressionExecutors;
-
+    private MaxByMinByExecutor minByMaxByExecutor;
     private StreamEvent oldEvent;
     private StreamEvent resultEvent;
     ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
-    private StreamEvent toExpireEvent;
+    private StreamEvent expiredResultEvent;
+    private StreamEvent resetEvent;
 
     public MaxByMinByLengthBatchWindowProcessor() {
 
@@ -70,10 +71,11 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
         this.executionPlanContext = executionPlanContext;
+        minByMaxByExecutor=new MaxByMinByExecutor();
         if (minByMaxByExecutorType == "MIN") {
-            MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+            minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }else{
-                MaxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+                minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
 
         if (attributeExpressionExecutors.length != 2) {
@@ -122,6 +124,7 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                 if (count == 0) {
                     outputStreamEventChunk.clear();
                     resultStreamEventChunk.clear();
+
                     oldEvent=null;
                     //clonedResultEvent=resultEvent;
                 }
@@ -139,13 +142,19 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                 if (count == length) {
                     //get the results
                      if(resultEvent!=null){
-                         if(toExpireEvent!=null) {
-                             outputStreamEventChunk.add(toExpireEvent);
+                         if(expiredResultEvent!=null) {
+                             expiredEventChunk.clear();
+                             outputStreamEventChunk.add(expiredResultEvent);
+                             outputStreamEventChunk.add(resetEvent);
                              //resultStreamEventChunk.add(resultEvent);
                          }
                          outputStreamEventChunk.add(resultEvent);
-                         toExpireEvent=streamEventCloner.copyStreamEvent(resultEvent);
-                         toExpireEvent.setType(StreamEvent.Type.EXPIRED);
+                         expiredResultEvent=streamEventCloner.copyStreamEvent(resultEvent);
+                         expiredResultEvent.setTimestamp(currentTime);
+                         expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
+                         expiredEventChunk.add(expiredResultEvent);
+                         resetEvent=streamEventCloner.copyStreamEvent(resultEvent);
+                         resetEvent.setType(StateEvent.Type.RESET);
                          System.out.println(outputStreamEventChunk);
                      }
                     count = 0;
@@ -185,13 +194,13 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     }
 
     @Override
-    public StreamEvent find(StateEvent stateEvent, Finder finder) {
-        return finder.find(stateEvent, toExpireEvent, streamEventCloner);
+    public StreamEvent find(StateEvent matchingEvent, Finder finder) {
+
+        return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> list, Map<String, EventTable> map) {
-        ComplexEventChunk expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
-        return OperatorParser.constructOperator(resultStreamEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
     }
 }
