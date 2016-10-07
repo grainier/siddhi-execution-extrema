@@ -1,5 +1,6 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
@@ -147,9 +148,9 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (sortType.equals(Constants.MIN_BY)) {
+                if (sortType.equals(MaxByMinByConstants.MIN_BY)) {
                     currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
-                } else if (sortType.equals(Constants.MAX_BY)) {
+                } else if (sortType.equals(MaxByMinByConstants.MAX_BY)) {
                     currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }
             }

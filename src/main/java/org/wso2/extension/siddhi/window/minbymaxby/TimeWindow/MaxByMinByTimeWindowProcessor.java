@@ -1,5 +1,6 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -39,7 +40,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent;
     private MaxByMinByExecutor minByMaxByExecutor;
-private ComplexEventChunk<StreamEvent> expiredEventChunk;
+    private ComplexEventChunk<StreamEvent> expiredEventChunk;
 
     public void setTimeInMilliSeconds(long timeInMilliSeconds) {
         this.timeInMilliSeconds = timeInMilliSeconds;
@@ -150,10 +151,10 @@ private ComplexEventChunk<StreamEvent> expiredEventChunk;
             expiredEventChunk.reset();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (sortType.equals(Constants.MIN_BY)){
-                    tempEvent = minByMaxByExecutor.getResult("MIN");
+                if (sortType.equals(MaxByMinByConstants.MIN_BY)){
+                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
-                    tempEvent = minByMaxByExecutor.getResult("MAX");
+                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
                 }
                 if (tempEvent != currentEvent) {
                     StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);

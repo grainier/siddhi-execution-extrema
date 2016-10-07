@@ -20,11 +20,7 @@ package org.wso2.extension.siddhi.window.minbymaxby;
 
 import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.query.api.definition.Attribute;
-import org.wso2.siddhi.query.api.expression.constant.FloatConstant;
-import org.wso2.siddhi.query.compiler.SiddhiQLParser;
 
-import java.util.Comparator;
 import java.util.TreeMap;
 
 /**
@@ -71,7 +67,7 @@ public class MaxByMinByExecutor  {
 
     public  StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
-        if (functionType.equals("MIN")) {
+        if (functionType.equals(MaxByMinByConstants.MIN_BY)) {
             Object minEventKey = sortedEventMap.firstKey();
             outputEvent = sortedEventMap.get(minEventKey);
         } else {

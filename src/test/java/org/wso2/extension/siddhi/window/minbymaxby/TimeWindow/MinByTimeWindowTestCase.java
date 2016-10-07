@@ -141,6 +141,7 @@ public class MinByTimeWindowTestCase {
         Thread.sleep(100);
         inputHandler.send(new Object[]{"MIT", 23.5f, 3});
         Thread.sleep(2100);
+
         inputHandler.send(new Object[]{"ORACLE", 10f, 5});
         inputHandler.send(new Object[]{"WSO2", 34.5f, 6});
         inputHandler.send(new Object[]{"GOOGLE", 65.5f, 7});
