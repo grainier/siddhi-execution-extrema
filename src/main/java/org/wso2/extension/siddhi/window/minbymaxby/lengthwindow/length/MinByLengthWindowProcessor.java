@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -15,22 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
 
-import org.wso2.siddhi.core.config.ExecutionPlanContext;
-import org.wso2.siddhi.core.event.ComplexEventChunk;
-import org.wso2.siddhi.core.event.stream.StreamEvent;
-import org.wso2.siddhi.core.event.stream.StreamEventCloner;
-import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.core.query.processor.Processor;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
+
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
 /**
- * Created by mathuriga on 29/09/16.
+ * Created by mathuriga on 30/09/16.
  */
-public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
-    public MinByLengthBatchWindowProcessor() {
-        super.minByMaxByExecutorType = "MIN";
+public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
 
+    public MinByLengthWindowProcessor() {
+        super.minByMaxByExecutorType = MaxByMinByConstants.MIN_BY;
+        super.minByMaxByExtensionType=MaxByMinByConstants.MinByLength;
     }
 
 }

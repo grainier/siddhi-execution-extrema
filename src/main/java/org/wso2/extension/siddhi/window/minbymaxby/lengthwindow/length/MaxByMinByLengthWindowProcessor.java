@@ -15,12 +15,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
-import org.wso2.siddhi.core.event.ComplexEvent;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
-import org.wso2.siddhi.core.event.MetaComplexEvent;
 import org.wso2.siddhi.core.event.state.StateEvent;
 import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.event.stream.StreamEventCloner;
@@ -37,21 +37,22 @@ import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
-//import org.wso2.siddhi.core.util.collection.operator.Finder;
-//import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+
+//import org.wso2.siddhi.core.util.collection.operator.Finder;
+//import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 
 /**
  * Created by mathuriga on 30/09/16.
  */
 public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements FindableProcessor {
-    private ExpressionExecutor minBymaxByExecutorAttribute;
+    private ExpressionExecutor minByMaxByExecutorAttribute;
     protected String minByMaxByExecutorType;
+    protected String minByMaxByExtensionType;
     private int length;
     private int count = 0;
     private ComplexEventChunk<StreamEvent> internalWindowChunk = null;
@@ -78,14 +79,14 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         maxByMinByExecutor = new MaxByMinByExecutor();
 
         // this.events=new ArrayList<StreamEvent>();
-        if (minByMaxByExecutorType == "MIN") {
+        if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
             maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         } else {
             maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
 
         if (attributeExpressionExecutors.length != 2) {
-            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " window, " +
                     "required 2, but found " + attributeExpressionExecutors.length);
         }
 
@@ -97,7 +98,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
                 || (attributeType == Attribute.Type.STRING)
                 || (attributeType == Attribute.Type.FLOAT)
                 || (attributeType == Attribute.Type.LONG))) {
-            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType + " window, " +
                     "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                     " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING +
                     ", but found " + attributeType.toString());
@@ -105,13 +106,13 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         attributeType = attributeExpressionExecutors[1].getReturnType();
         if (!((attributeType == Attribute.Type.LONG)
                 || (attributeType == Attribute.Type.INT))) {
-            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:maxByLength() or minbymaxby:maxByLength() window, " +
+            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType + " window, " +
                     "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                     ", but found " + attributeType.toString());
         }
 
         if (attributeExpressionExecutors.length == 2) {
-            minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
+            minByMaxByExecutorAttribute = attributeExpressionExecutors[0];
             length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
 
         }
@@ -134,7 +135,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
                 }
 
                 //get the parameter value for every events
-                Object parameterValue = getParameterValue(minBymaxByExecutorAttribute, streamEvent);
+                Object parameterValue = getParameterValue(minByMaxByExecutorAttribute, streamEvent);
                     maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
 
                 //
@@ -170,7 +171,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
                         firstEvent.setTimestamp(currentTime);
 
                         //remove the expired event from treemap
-                        Object expiredEventParameterValue = getParameterValue(minBymaxByExecutorAttribute, firstEvent);
+                        Object expiredEventParameterValue = getParameterValue(minByMaxByExecutorAttribute, firstEvent);
 
                         maxByMinByExecutor.getSortedEventMap().remove(expiredEventParameterValue);
                         events.remove(0);

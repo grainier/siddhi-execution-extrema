@@ -34,7 +34,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec,0) " +
                 "select symbol, price " +
                 "insert into outputStream ;";
 
@@ -61,13 +61,16 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"IBM", 700f, 1});
         inputHandler.send(new Object[]{"WSO2", 888f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 1});
-        Thread.sleep(5000);
+        Thread.sleep(1100);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
         inputHandler.send(new Object[]{"IBM", 777f, 3});
         inputHandler.send(new Object[]{"WSO2", 234.5f, 4});
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"IBM", 90f, 5});
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
+        Thread.sleep(2000);
+        executionPlanRuntime.shutdown();;
+
         Thread.sleep(2000);
         Assert.assertEquals(3, inEventCount);
         Assert.assertTrue(eventArrived);

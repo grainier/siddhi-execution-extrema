@@ -1,5 +1,6 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -24,18 +25,22 @@ import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.*;
 
+/**
+ * Abstract class which gives the min/max event in a Time Window
+ */
+
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
 
+    protected String sortType;
+    protected String windowType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
     private volatile long lastTimestamp = Long.MIN_VALUE;
     private ExpressionExecutor sortByAttribute;
     private StreamEvent currentEvent;
-    private StreamEvent expiredEvent;
-    protected String timeWindowType;
     private MaxByMinByExecutor minByMaxByExecutor;
-
+    private ComplexEventChunk<StreamEvent> expiredEventChunk;
 
     public void setTimeInMilliSeconds(long timeInMilliSeconds) {
         this.timeInMilliSeconds = timeInMilliSeconds;
@@ -54,6 +59,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
+        this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         minByMaxByExecutor=new MaxByMinByExecutor();
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
@@ -61,11 +67,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             if (!((attributeType == Attribute.Type.DOUBLE)
                     || (attributeType == Attribute.Type.INT)
                     || (attributeType == Attribute.Type.FLOAT)
-                    || (attributeType == Attribute.Type.LONG))) {
+                    || (attributeType == Attribute.Type.LONG)
+                    || (attributeType == Attribute.Type.STRING))) {
                 throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
-                        timeWindowType +
+                        windowType +
                         " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
                         " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
+                        " or " + Attribute.Type.STRING +
                         ", but found " + attributeType.toString());
             }
 
@@ -84,8 +92,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                         attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else {
-            throw new ExecutionPlanValidationException("Invalid no of arguments passed to "+
-                    timeWindowType+ ", " +
+            throw new ExecutionPlanValidationException("Invalid no of arguments passed to " +
+                    windowType + ", " +
                     "required 2, but found " + attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -102,18 +110,31 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                 // Get an iterator
                 Iterator iterator = set.iterator();
                 // Iterate through the sortedEventMap and remove the expired events
-                while(iterator.hasNext()) {
-                    Map.Entry entry = (Map.Entry)iterator.next();
+                while (iterator.hasNext()) {
+                    Map.Entry entry = (Map.Entry) iterator.next();
                     StreamEvent expiredEvent = (StreamEvent) entry.getValue();
                     long timeDiff = expiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
-                        expiredEvent.setType(StreamEvent.Type.EXPIRED);
-                        expiredEvent.setTimestamp(currentTime);
+//                        if(currentEvent == expiredEvent){
+//                            expiredEvent.setType(StreamEvent.Type.EXPIRED);
+//                            expiredEvent.setTimestamp(currentTime);
+//                            streamEventChunk.insertBeforeCurrent(expiredEvent);
+//                        }
                         iterator.remove();
-                    } else {
-                        break;
                     }
                 }
+                expiredEventChunk.reset();
+                while(expiredEventChunk.hasNext()){
+                    StreamEvent toExpiredEvent = expiredEventChunk.next();
+                    long timeDiff = toExpiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
+                    if (timeDiff <= 0) {
+                        expiredEventChunk.remove();
+                        toExpiredEvent.setType(StreamEvent.Type.EXPIRED);
+                        toExpiredEvent.setTimestamp(currentTime);
+                        streamEventChunk.insertBeforeCurrent(toExpiredEvent);
+                    }
+                }
+
                 if (streamEvent.getType() == StreamEvent.Type.CURRENT) {
                     //clone the current stream event
                     //add the event to the sorted event map
@@ -124,29 +145,24 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                         lastTimestamp = clonedEvent.getTimestamp();
                     }
                 }
-                else {
-                    streamEventChunk.remove();
-                }
+
+                streamEventChunk.remove();
             }
-            streamEventChunk.clear();
+            expiredEventChunk.reset();
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (timeWindowType.equals(Constants.MIN_BY)){
-                    tempEvent = minByMaxByExecutor.getResult("MIN");
+                if (sortType.equals(MaxByMinByConstants.MIN_BY)){
+                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
-                    tempEvent = minByMaxByExecutor.getResult("MAX");
+                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
                 }
-                if(tempEvent != currentEvent){
+                if (tempEvent != currentEvent) {
+                    StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);
+                    expiredEventChunk.add(event);
                     currentEvent = tempEvent;
-                    expiredEvent = currentEvent;
-                    if(currentEvent != null){
+                    if (currentEvent != null) {
                         streamEventChunk.add(currentEvent);
                     }
-                }
-            }
-            if (outputExpectsExpiredEvents){
-                if (expiredEvent != null && expiredEvent.getType() == StreamEvent.Type.EXPIRED){
-                    streamEventChunk.add(expiredEvent);
                 }
             }
         }
@@ -155,13 +171,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, minByMaxByExecutor.getSortedEventMap(), streamEventCloner);
+        return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(minByMaxByExecutor.getSortedEventMap(), expression, matchingMetaStateHolder,
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,
                 executionPlanContext, variableExpressionExecutors, eventTableMap);
     }
 
@@ -183,7 +199,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     @Override
     public void restoreState(Object[] state) {
 
-        //minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
+        minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
     }
 }
 

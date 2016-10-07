@@ -1,7 +1,13 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
+import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
+
+/**
+ * Output the max event corresponding to a given attribute in a Time Batch Window
+ */
 public class MaxByTimeBatchWindowProcessor extends MaxByMinByTimeBatchWindowProcessor {
-    public MaxByTimeBatchWindowProcessor(){
-        timeBatchWindowType = Constants.MAX_BY;
+    public MaxByTimeBatchWindowProcessor() {
+        sortType = MaxByMinByConstants.MAX_BY;
+        windowType = MaxByMinByConstants.MaxByTimeBatch;
     }
 }
