@@ -23,6 +23,7 @@ import com.clearspring.analytics.stream.StreamSummary;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
+import org.wso2.siddhi.core.event.state.StateEvent;
 import org.wso2.siddhi.core.event.stream.StreamEvent;
 import org.wso2.siddhi.core.event.stream.StreamEventCloner;
 import org.wso2.siddhi.core.event.stream.populater.ComplexEventPopulater;
@@ -31,14 +32,21 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
+import org.wso2.siddhi.core.query.processor.stream.window.FindableProcessor;
+import org.wso2.siddhi.core.table.EventTable;
+import org.wso2.siddhi.core.util.collection.operator.Finder;
+import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
+import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
+import org.wso2.siddhi.query.api.expression.Expression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public abstract class AbstractKLengthBatchStreamProcessorExtension extends StreamProcessor {
+public abstract class AbstractKLengthBatchStreamProcessorExtension extends StreamProcessor implements FindableProcessor {
     protected boolean isTopK;
     private int windowLength;
     private int querySize;
@@ -49,13 +57,14 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
 
     private StreamEvent lastStreamEvent = null;
     private StreamEvent resetEvent = null;
-    private StreamEvent expiredStreamEvent = null;
+    private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
                                    ExecutionPlanContext executionPlanContext) {
         String namePrefix = (isTopK ? "Top" : "Bottom");
         if (attributeExpressionExecutors.length == 3) {
+            expiredEventChunk = new ComplexEventChunk<StreamEvent>(true);
             count = 0;
         } else {
             throw new ExecutionPlanValidationException("3 arguments should be passed to " +
@@ -105,8 +114,8 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
         // Generating the list of attributes
         List<Attribute> newAttributes = new ArrayList<Attribute>();
         for (int i = 0; i < querySize; i++) {
-            newAttributes.add(new Attribute(namePrefix + i + "Element", attrVariableExpressionExecutor.getReturnType()));
-            newAttributes.add(new Attribute(namePrefix + i + "Frequency", Attribute.Type.LONG));
+            newAttributes.add(new Attribute(namePrefix + (i + 1) + "Element", attrVariableExpressionExecutor.getReturnType()));
+            newAttributes.add(new Attribute(namePrefix + (i + 1) + "Frequency", Attribute.Type.LONG));
         }
         return newAttributes;
     }
@@ -135,9 +144,9 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 // Window end tasks
                 if (count == windowLength) {
                     // Adding expired events
-                    if (outputExpectsExpiredEvents && expiredStreamEvent != null) {
-                        outputStreamEventChunk.add(expiredStreamEvent);
-                        expiredStreamEvent = null;
+                    if (outputExpectsExpiredEvents && expiredEventChunk.getFirst() != null) {
+                        outputStreamEventChunk.add(expiredEventChunk.getFirst());
+                        expiredEventChunk.clear();
                     }
 
                     // Adding the reset event
@@ -158,11 +167,10 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                     outputStreamEventChunk.add(lastStreamEvent);
 
                     // Setting the event expired in this window
-                    if (outputExpectsExpiredEvents) {
-                        expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                        expiredStreamEvent.setTimestamp(currentTime);
-                        expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
-                    }
+                    StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                    expiredStreamEvent.setTimestamp(currentTime);
+                    expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                    expiredEventChunk.add(expiredStreamEvent);
                     lastStreamEvent = null;
 
                     // Resetting window
@@ -197,7 +205,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     public Object[] currentState() {
         synchronized (this) {
             if (outputExpectsExpiredEvents) {
-                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent, expiredStreamEvent};
+                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent, expiredEventChunk};
             } else {
                 return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent};
             }
@@ -215,8 +223,31 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
             lastStreamEvent = (StreamEvent) state[4];
             resetEvent = (StreamEvent) state[5];
             if (state.length == 7) {
-                expiredStreamEvent = (StreamEvent) state[6];
+                expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[6];
             }
+        }
+    }
+
+    @Override
+    public StreamEvent find(StateEvent matchingEvent, Finder finder) {
+        synchronized (this) {
+            return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
+        }
+    }
+
+    @Override
+    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
+                                  ExecutionPlanContext executionPlanContext,
+                                  List<VariableExpressionExecutor> variableExpressionExecutors,
+                                  Map<String, EventTable> eventTableMap) {
+        synchronized (this) {
+            if (expiredEventChunk == null) {
+                expiredEventChunk = new ComplexEventChunk<StreamEvent>(true);
+            }
+            return OperatorParser.constructOperator(
+                    expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext,
+                    variableExpressionExecutors, eventTableMap
+            );
         }
     }
 }

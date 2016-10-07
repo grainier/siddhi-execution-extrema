@@ -46,7 +46,7 @@ public class TopKStreamProcessorExtensionTestCase {
         log.info("TopKStreamProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
-        String inStreamDefinition = "define stream inputStream (item int, price double);";
+        String inStreamDefinition = "define stream inputStream (item string, price long);";
         String query = ("@info(name = 'query1') from inputStream#window.lengthBatch(6)#custom:topK(item, 3)  " +
                 "insert all events into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
@@ -99,21 +99,91 @@ public class TopKStreamProcessorExtensionTestCase {
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("inputStream");
         executionPlanRuntime.start();
 
-        inputHandler.send(new Object[]{"item1", 10});
-        inputHandler.send(new Object[]{"item1", 13});
-        inputHandler.send(new Object[]{"item2", 65});
-        inputHandler.send(new Object[]{"item1", 74});
-        inputHandler.send(new Object[]{"item2", 25});
-        inputHandler.send(new Object[]{"item3", 64});
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
         // Length Window reset
-        inputHandler.send(new Object[]{"item4", 65});
-        inputHandler.send(new Object[]{"item5", 45});
-        inputHandler.send(new Object[]{"item6", 34});
-        inputHandler.send(new Object[]{"item4", 76});
-        inputHandler.send(new Object[]{"item5", 93});
-        inputHandler.send(new Object[]{"item6", 23});
+        inputHandler.send(new Object[]{"item4", 65L});
+        inputHandler.send(new Object[]{"item5", 45L});
+        inputHandler.send(new Object[]{"item6", 34L});
+        inputHandler.send(new Object[]{"item4", 76L});
+        inputHandler.send(new Object[]{"item5", 93L});
+        inputHandler.send(new Object[]{"item6", 23L});
 
         Thread.sleep(1000);
+        Assert.assertEquals(2, count);
+        Assert.assertTrue(eventArrived);
+        executionPlanRuntime.shutdown();
+    }
+
+    @Test
+    public void testTopKStreamProcessorExtensionWithTimeBatchWindowAndJoin() throws InterruptedException {
+        log.info("TopKStreamProcessor TestCase 2");
+        SiddhiManager siddhiManager = new SiddhiManager();
+
+        String inStreamDefinition = "define stream inputStream1 (item string, price long);" +
+                "define stream inputStream2 (item string, type string);";
+        String query = ("@info(name = 'query1') " +
+                "from inputStream1#window.timeBatch(1 sec)#custom:topK(item, 3) as stream1 " +
+                "join inputStream2#window.timeBatch(1 sec) as stream2 " +
+                "on stream1.Top1Element==stream2.item " +
+                "select stream2.item as item, stream2.type as type " +
+                "insert into outputStream;");
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
+
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                eventArrived = true;
+                Assert.assertNotNull(inEvents);
+                for (Event event : inEvents) {
+                    if (count == 0) {
+                        Assert.assertEquals("item1", event.getData(0));
+                        Assert.assertEquals("cash", event.getData(1));
+                        Assert.assertFalse(event.isExpired());
+                    } else if (count == 1) {
+                        Assert.assertEquals("item4", event.getData(0));
+                        Assert.assertEquals("credit card", event.getData(1));
+                        Assert.assertFalse(event.isExpired());
+                    } else {
+                        Assert.fail();
+                    }
+                }
+                Assert.assertNull(removeEvents);
+                count++;
+            }
+        });
+
+        InputHandler inputHandler1 = executionPlanRuntime.getInputHandler("inputStream1");
+        InputHandler inputHandler2 = executionPlanRuntime.getInputHandler("inputStream2");
+        executionPlanRuntime.start();
+
+        inputHandler1.send(new Object[]{"item1", 10L});
+        inputHandler1.send(new Object[]{"item1", 13L});
+        inputHandler1.send(new Object[]{"item2", 65L});
+        inputHandler1.send(new Object[]{"item1", 74L});
+        inputHandler1.send(new Object[]{"item2", 25L});
+        inputHandler1.send(new Object[]{"item3", 64L});
+        inputHandler2.send(new Object[]{"item1", "cash"});
+        inputHandler2.send(new Object[]{"item2", "credit card"});
+        inputHandler2.send(new Object[]{"item3", "voucher"});
+        // Time Window reset
+        Thread.sleep(1100);
+        inputHandler1.send(new Object[]{"item4", 65L});
+        inputHandler1.send(new Object[]{"item5", 45L});
+        inputHandler1.send(new Object[]{"item6", 34L});
+        inputHandler1.send(new Object[]{"item4", 76L});
+        inputHandler1.send(new Object[]{"item5", 93L});
+        inputHandler1.send(new Object[]{"item6", 23L});
+        inputHandler2.send(new Object[]{"item5", "voucher"});
+        inputHandler2.send(new Object[]{"item4", "credit card"});
+        inputHandler2.send(new Object[]{"item6", "cash"});
+
+        Thread.sleep(1100);
         Assert.assertEquals(2, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
