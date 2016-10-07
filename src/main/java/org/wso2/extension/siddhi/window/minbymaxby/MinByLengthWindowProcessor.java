@@ -30,18 +30,9 @@ import org.wso2.siddhi.core.query.processor.Processor;
  * Created by mathuriga on 30/09/16.
  */
 public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
-   // String functionType;
-
 
     public MinByLengthWindowProcessor() {
         super.minByMaxByExecutorType = "MIN";
     }
 
-    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-        super.init(expressionExecutors, executionPlanContext);
-    }
-
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
-        super.process(streamEventChunk, nextProcessor, streamEventCloner);
-    }
 }

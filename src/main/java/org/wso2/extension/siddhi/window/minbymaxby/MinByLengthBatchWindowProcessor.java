@@ -33,12 +33,4 @@ public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindow
 
     }
 
-    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-        super.init(expressionExecutors, executionPlanContext);
-    }
-
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
-        super.process(streamEventChunk, nextProcessor, streamEventCloner);
-    }
-
 }

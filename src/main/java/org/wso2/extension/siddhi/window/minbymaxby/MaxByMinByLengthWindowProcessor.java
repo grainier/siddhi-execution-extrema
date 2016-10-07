@@ -60,9 +60,9 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
     private MaxByMinByExecutor maxByMinByExecutor;
     private StreamEvent outputStreamEvent;
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
-    ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
     StreamEvent toExpiredEvent = null;
-    StreamEvent currentEvent = null;
+
+
 
 
     public void setOutputStreamEvent(StreamEvent outputSreamEvent) {
@@ -90,6 +90,8 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         }
 
         Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+
+
         if (!((attributeType == Attribute.Type.DOUBLE)
                 || (attributeType == Attribute.Type.INT)
                 || (attributeType == Attribute.Type.STRING)
@@ -111,6 +113,7 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
         if (attributeExpressionExecutors.length == 2) {
             minBymaxByExecutorAttribute = attributeExpressionExecutors[0];
             length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
+
         }
 
     }
@@ -132,13 +135,15 @@ public class MaxByMinByLengthWindowProcessor extends WindowProcessor implements 
 
                 //get the parameter value for every events
                 Object parameterValue = getParameterValue(minBymaxByExecutorAttribute, streamEvent);
-                maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
+                    maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
+
                 //
 
                 //clonedEvent.setType(StreamEvent.Type.EXPIRED);
                 if (count < length) {
                     count++;
                     //get the output event
+
                     setOutputStreamEvent(maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
 
                     if (toExpiredEvent != null) {
