@@ -241,10 +241,19 @@ public class MinByTimeBatchWindowTestCase {
             twitterStreamHandler.send(new Object[]{"User2", "Hi", "MIT"});
             cseEventStreamHandler.send(new Object[]{"IBM", 75.6f, 100});
             twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"MIT", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hey", "MIT"});
+            twitterStreamHandler.send(new Object[]{"User1", "Hey", "APPLE"});
+            cseEventStreamHandler.send(new Object[]{"APPLE", 6.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"MIT", 57.6f, 100});
+
             Thread.sleep(1500);
-            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "IBM"});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 17.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 75.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
+            cseEventStreamHandler.send(new Object[]{"IBM", 7.6f, 100});
             Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
             Assert.assertEquals(0, removeEventCount);

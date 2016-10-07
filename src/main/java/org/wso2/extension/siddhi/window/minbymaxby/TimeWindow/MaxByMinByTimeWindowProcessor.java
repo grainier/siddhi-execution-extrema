@@ -31,7 +31,7 @@ import java.util.*;
 
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
 
-    protected String sortType;
+    protected String maxByMinByType;
     protected String windowType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
@@ -41,10 +41,6 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     private StreamEvent currentEvent;
     private MaxByMinByExecutor minByMaxByExecutor;
     private ComplexEventChunk<StreamEvent> expiredEventChunk;
-
-    public void setTimeInMilliSeconds(long timeInMilliSeconds) {
-        this.timeInMilliSeconds = timeInMilliSeconds;
-    }
 
     @Override
     public Scheduler getScheduler() {
@@ -105,24 +101,19 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             while (streamEventChunk.hasNext()) {
                 streamEvent = streamEventChunk.next();
                 long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-                //Get the set of entries
-                Set set = minByMaxByExecutor.getSortedEventMap().entrySet();
-                // Get an iterator
-                Iterator iterator = set.iterator();
+
                 // Iterate through the sortedEventMap and remove the expired events
+                Set set = minByMaxByExecutor.getSortedEventMap().entrySet();
+                Iterator iterator = set.iterator();
                 while (iterator.hasNext()) {
                     Map.Entry entry = (Map.Entry) iterator.next();
                     StreamEvent expiredEvent = (StreamEvent) entry.getValue();
                     long timeDiff = expiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
-//                        if(currentEvent == expiredEvent){
-//                            expiredEvent.setType(StreamEvent.Type.EXPIRED);
-//                            expiredEvent.setTimestamp(currentTime);
-//                            streamEventChunk.insertBeforeCurrent(expiredEvent);
-//                        }
                         iterator.remove();
                     }
                 }
+                //remove expired events from the expiredEventChunk
                 expiredEventChunk.reset();
                 while(expiredEventChunk.hasNext()){
                     StreamEvent toExpiredEvent = expiredEventChunk.next();
@@ -135,9 +126,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     }
                 }
 
+                //Add the current event to sortedEventMap
                 if (streamEvent.getType() == StreamEvent.Type.CURRENT) {
-                    //clone the current stream event
-                    //add the event to the sorted event map
                     StreamEvent clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
                     minByMaxByExecutor.insert(clonedEvent , sortByAttribute.execute(clonedEvent));
                     if (lastTimestamp < clonedEvent.getTimestamp()) {
@@ -145,13 +135,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                         lastTimestamp = clonedEvent.getTimestamp();
                     }
                 }
-
                 streamEventChunk.remove();
             }
             expiredEventChunk.reset();
+            //retrieve the min/max event and add to streamEventChunk
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (sortType.equals(MaxByMinByConstants.MIN_BY)){
+                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)){
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
@@ -198,7 +188,6 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
 
     @Override
     public void restoreState(Object[] state) {
-
         minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
     }
 }

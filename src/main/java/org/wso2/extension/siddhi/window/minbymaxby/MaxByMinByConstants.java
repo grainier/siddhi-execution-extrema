@@ -1,7 +1,7 @@
 package org.wso2.extension.siddhi.window.minbymaxby;
 
 /**
- * Holds the constants required for to retrieve minimum or maximum event
+ * Holds the constants required to retrieve minimum or maximum event
  */
 public class MaxByMinByConstants {
     public static final String MIN_BY = "MIN_BY";

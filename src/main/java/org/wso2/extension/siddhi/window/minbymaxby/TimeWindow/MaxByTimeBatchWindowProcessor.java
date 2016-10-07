@@ -7,7 +7,7 @@ import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
  */
 public class MaxByTimeBatchWindowProcessor extends MaxByMinByTimeBatchWindowProcessor {
     public MaxByTimeBatchWindowProcessor() {
-        sortType = MaxByMinByConstants.MAX_BY;
+        maxByMinByType = MaxByMinByConstants.MAX_BY;
         windowType = MaxByMinByConstants.MaxByTimeBatch;
     }
 }

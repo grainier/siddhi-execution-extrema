@@ -32,7 +32,7 @@ import java.util.Map;
  */
 
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
-    protected String sortType;
+    protected String maxByMinByType;
     protected String windowType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
@@ -122,8 +122,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         synchronized (this) {
+            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             if (nextEmitTime == -1) {
-                long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
                 if (isStartTimeEnabled) {
                     nextEmitTime = getNextEmitTime(currentTime);
                 } else {
@@ -131,9 +131,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                 }
                 scheduler.notifyAt(nextEmitTime);
             }
-            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-            boolean sendEvents;
 
+            boolean sendEvents;
             if (currentTime >= nextEmitTime) {
                 nextEmitTime += timeInMilliSeconds;
                 scheduler.notifyAt(nextEmitTime);
@@ -142,22 +141,21 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                 sendEvents = false;
             }
 
+            //for each event, set the min/max event as current event
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
                 if (streamEvent.getType() != ComplexEvent.Type.CURRENT) {
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (sortType.equals(MaxByMinByConstants.MIN_BY)) {
+                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
                     currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
-                } else if (sortType.equals(MaxByMinByConstants.MAX_BY)) {
+                } else if (maxByMinByType.equals(MaxByMinByConstants.MAX_BY)) {
                     currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }
             }
             streamEventChunk.clear();
             if (sendEvents) {
-
-
                 if (outputExpectsExpiredEvents) {
                     if (expiredEventChunk.getFirst() != null) {
                         while (expiredEventChunk.hasNext()) {
