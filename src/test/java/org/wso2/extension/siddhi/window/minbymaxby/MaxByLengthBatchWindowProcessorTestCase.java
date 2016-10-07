@@ -238,7 +238,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 "from cseEventStream#window.minbymaxby:maxByLengthBatch(price, 2) join twitterStream#window.minbymaxby:maxByLengthBatch(num, 2) " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
-                "insert all events into outputStream ;";
+                "insert events into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
@@ -262,9 +262,9 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
 
-//            cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
-//            cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
-//            cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
+            cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
+            cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
 
         } finally {
             executionPlanRuntime.shutdown();
@@ -286,7 +286,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 "from cseEventStream#window.minbymaxby:maxByLengthBatch(price, 2) join twitterStream#window.LengthBatch(2) " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
-                "insert all events into outputStream ;";
+                "insert events into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
