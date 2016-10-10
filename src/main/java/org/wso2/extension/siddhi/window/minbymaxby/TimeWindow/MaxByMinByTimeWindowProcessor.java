@@ -56,7 +56,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
         this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
-        minByMaxByExecutor=new MaxByMinByExecutor();
+        minByMaxByExecutor = new MaxByMinByExecutor();
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
             sortByAttribute = attributeExpressionExecutors[0];
@@ -115,7 +115,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                 }
                 //remove expired events from the expiredEventChunk
                 expiredEventChunk.reset();
-                while(expiredEventChunk.hasNext()){
+                while (expiredEventChunk.hasNext()) {
                     StreamEvent toExpiredEvent = expiredEventChunk.next();
                     long timeDiff = toExpiredEvent.getTimestamp() - currentTime + timeInMilliSeconds;
                     if (timeDiff <= 0) {
@@ -129,7 +129,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                 //Add the current event to sortedEventMap
                 if (streamEvent.getType() == StreamEvent.Type.CURRENT) {
                     StreamEvent clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                    minByMaxByExecutor.insert(clonedEvent , sortByAttribute.execute(clonedEvent));
+                    minByMaxByExecutor.insert(clonedEvent, sortByAttribute.execute(clonedEvent));
                     if (lastTimestamp < clonedEvent.getTimestamp()) {
                         scheduler.notifyAt(clonedEvent.getTimestamp() + timeInMilliSeconds);
                         lastTimestamp = clonedEvent.getTimestamp();
@@ -141,7 +141,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
             //retrieve the min/max event and add to streamEventChunk
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)){
+                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
@@ -150,9 +150,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
                     StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);
                     expiredEventChunk.add(event);
                     currentEvent = tempEvent;
-                    if (currentEvent != null) {
-                        streamEventChunk.add(currentEvent);
-                    }
+                    streamEventChunk.add(currentEvent);
                 }
             }
         }

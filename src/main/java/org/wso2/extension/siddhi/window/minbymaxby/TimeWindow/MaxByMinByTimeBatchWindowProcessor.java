@@ -229,7 +229,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     @Override
     public void restoreState(Object[] state) {
         if (state.length > 2) {
-            currentEvent = (StreamEvent)state[0];
+            currentEvent = (StreamEvent) state[0];
             expiredEventChunk.clear();
             expiredEventChunk.add((StreamEvent) state[1]);
             resetEvent = (StreamEvent) state[2];
