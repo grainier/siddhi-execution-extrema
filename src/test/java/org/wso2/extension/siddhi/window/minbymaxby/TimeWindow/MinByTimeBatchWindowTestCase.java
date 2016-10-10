@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ */
+
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
 import junit.framework.Assert;
@@ -87,12 +106,19 @@ public class MinByTimeBatchWindowTestCase {
                 "insert expired events into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
-
-        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+        executionPlanRuntime.addCallback("query2", new QueryCallback() {
             @Override
-            public void receive(Event[] events) {
-                EventPrinter.print(events);
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                if (inEvents != null) {
+                    inEventCount = inEventCount + inEvents.length;
+                }
+                if (removeEvents != null) {
+                    removeEventCount = removeEventCount + removeEvents.length;
+                }
+                eventArrived = true;
             }
+
         });
 
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -157,30 +183,24 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream twitterStream (user string, tweet string, company string); ";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.timeBatch(1) " +
+                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.timeBatch(1 sec) " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
-//            executionPlanRuntime.addCallback("query1", new QueryCallback() {
-//                @Override
-//                public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
-//                    EventPrinter.print(timeStamp, inEvents, removeEvents);
-//                    if (inEvents != null) {
-//                        inEventCount += (inEvents.length);
-//                    }
-//                    if (removeEvents != null) {
-//                        removeEventCount += (removeEvents.length);
-//                    }
-//                    eventArrived = true;
-//                }
-//            });
-            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+            executionPlanRuntime.addCallback("query1", new QueryCallback() {
                 @Override
-                public void receive(Event[] events) {
-                    EventPrinter.print(events);
+                public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                    EventPrinter.print(timeStamp, inEvents, removeEvents);
+                    if (inEvents != null) {
+                        inEventCount += (inEvents.length);
+                    }
+                    if (removeEvents != null) {
+                        removeEventCount += (removeEvents.length);
+                    }
+                    eventArrived = true;
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -209,30 +229,24 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream twitterStream (user string, tweet string, company string); ";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.minbymaxby:minbytimebatch(company,1 sec)  " +
+                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.minbymaxby:maxbytimebatch(company,1 sec)  " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
-//            executionPlanRuntime.addCallback("query1", new QueryCallback() {
-//                @Override
-//                public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
-//                    EventPrinter.print(timeStamp, inEvents, removeEvents);
-//                    if (inEvents != null) {
-//                        inEventCount += (inEvents.length);
-//                    }
-//                    if (removeEvents != null) {
-//                        removeEventCount += (removeEvents.length);
-//                    }
-//                    eventArrived = true;
-//                }
-//            });
-            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+            executionPlanRuntime.addCallback("query1", new QueryCallback() {
                 @Override
-                public void receive(Event[] events) {
-                    EventPrinter.print(events);
+                public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                    EventPrinter.print(timeStamp, inEvents, removeEvents);
+                    if (inEvents != null) {
+                        inEventCount += (inEvents.length);
+                    }
+                    if (removeEvents != null) {
+                        removeEventCount += (removeEvents.length);
+                    }
+                    eventArrived = true;
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -241,10 +255,19 @@ public class MinByTimeBatchWindowTestCase {
             twitterStreamHandler.send(new Object[]{"User2", "Hi", "MIT"});
             cseEventStreamHandler.send(new Object[]{"IBM", 75.6f, 100});
             twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"MIT", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hey", "MIT"});
+            twitterStreamHandler.send(new Object[]{"User1", "Hey", "APPLE"});
+            cseEventStreamHandler.send(new Object[]{"ZET", 6.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"MIT", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hey", "ZET"});
             Thread.sleep(1500);
-            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
-            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "IBM"});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 17.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 75.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
+            cseEventStreamHandler.send(new Object[]{"IBM", 7.6f, 100});
             Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
             Assert.assertEquals(0, removeEventCount);

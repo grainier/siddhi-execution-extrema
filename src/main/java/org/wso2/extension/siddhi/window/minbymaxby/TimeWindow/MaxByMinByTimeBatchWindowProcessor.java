@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ */
+
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
@@ -32,7 +51,7 @@ import java.util.Map;
  */
 
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
-    protected String sortType;
+    protected String maxByMinByType;
     protected String windowType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
@@ -122,8 +141,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         synchronized (this) {
+            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             if (nextEmitTime == -1) {
-                long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
                 if (isStartTimeEnabled) {
                     nextEmitTime = getNextEmitTime(currentTime);
                 } else {
@@ -131,9 +150,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                 }
                 scheduler.notifyAt(nextEmitTime);
             }
-            long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-            boolean sendEvents;
 
+            boolean sendEvents;
             if (currentTime >= nextEmitTime) {
                 nextEmitTime += timeInMilliSeconds;
                 scheduler.notifyAt(nextEmitTime);
@@ -142,22 +160,21 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                 sendEvents = false;
             }
 
+            //for each event, set the min/max event as current event
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
                 if (streamEvent.getType() != ComplexEvent.Type.CURRENT) {
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (sortType.equals(MaxByMinByConstants.MIN_BY)) {
+                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
                     currentEvent = MaxByMinByExecutor.getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
-                } else if (sortType.equals(MaxByMinByConstants.MAX_BY)) {
+                } else if (maxByMinByType.equals(MaxByMinByConstants.MAX_BY)) {
                     currentEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }
             }
             streamEventChunk.clear();
             if (sendEvents) {
-
-
                 if (outputExpectsExpiredEvents) {
                     if (expiredEventChunk.getFirst() != null) {
                         while (expiredEventChunk.hasNext()) {
@@ -231,7 +248,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     @Override
     public void restoreState(Object[] state) {
         if (state.length > 2) {
-            currentEvent = (StreamEvent)state[0];
+            currentEvent = (StreamEvent) state[0];
             expiredEventChunk.clear();
             expiredEventChunk.add((StreamEvent) state[1]);
             resetEvent = (StreamEvent) state[2];
