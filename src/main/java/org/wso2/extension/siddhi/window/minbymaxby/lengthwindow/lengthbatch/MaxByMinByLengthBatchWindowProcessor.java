@@ -45,8 +45,9 @@ import java.util.Map;
 
 
 /**
- * Created by mathuriga on 29/09/16.
+ * Abstract class which gives the min/max event in a LengthBatch window
  */
+
 public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implements FindableProcessor {
     private int length;
     private int count = 0;

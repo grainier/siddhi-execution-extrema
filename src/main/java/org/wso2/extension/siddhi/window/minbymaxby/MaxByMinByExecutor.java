@@ -25,7 +25,7 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import java.util.TreeMap;
 
 /**
- * Created by mathuriga on 29/09/16.
+ * clas which has the logic implementation to get the event which hold min/max value corresponding to given attribute
  */
 public class MaxByMinByExecutor {
     private String minByMaxByExecutorType;
@@ -48,7 +48,6 @@ public class MaxByMinByExecutor {
     public void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
         this.minByMaxByExecutorType = minByMaxByExecutorType;
     }
-
 
     /**
      * To insert the current event into treemap .

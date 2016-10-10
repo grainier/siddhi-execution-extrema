@@ -22,7 +22,7 @@ package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.length;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
 /**
- * Created by mathuriga on 30/09/16.
+ * Give the event which holds min value corresponding to a given attribute in a length Window
  */
 public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
 

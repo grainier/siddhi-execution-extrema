@@ -23,7 +23,7 @@ package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
 /**
- * Created by mathuriga on 29/09/16.
+ * Give the event which holds max value corresponding to a given attribute in a lengthBatch Window
  */
 public class MaxByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
 

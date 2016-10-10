@@ -47,7 +47,7 @@ import java.util.Map;
 //import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 
 /**
- * Created by mathuriga on 30/09/16.
+ * Abstract class which gives the min/max event in a Length window
  */
 public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor implements FindableProcessor {
     private ExpressionExecutor minByMaxByExecutorAttribute;
