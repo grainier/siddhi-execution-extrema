@@ -16,10 +16,10 @@
 # under the License.
 #
 
-minByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.MinByLengthBatchWindowProcessor
-maxByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.MaxByLengthBatchWindowProcessor
-minByLength=org.wso2.extension.siddhi.window.minbymaxby.MinByLengthWindowProcessor
-maxByLength=org.wso2.extension.siddhi.window.minbymaxby.MaxByLengthWindowProcessor
+minByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch.MinByLengthBatchWindowProcessor
+maxByLengthBatch=org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch.MaxByLengthBatchWindowProcessor
+minByLength=org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.length.MinByLengthWindowProcessor
+maxByLength=org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.length.MaxByLengthWindowProcessor
 minbytimebatch=org.wso2.extension.siddhi.window.minbymaxby.TimeWindow.MinByTimeBatchWindowProcessor
 maxbytimebatch=org.wso2.extension.siddhi.window.minbymaxby.TimeWindow.MaxByTimeBatchWindowProcessor
 minbytime=org.wso2.extension.siddhi.window.minbymaxby.TimeWindow.MinByTimeWindowProcessor
