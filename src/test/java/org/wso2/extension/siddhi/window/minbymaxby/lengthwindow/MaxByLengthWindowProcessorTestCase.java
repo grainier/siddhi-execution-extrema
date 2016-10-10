@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -85,6 +85,7 @@ public class MaxByLengthWindowProcessorTestCase {
             executionPlanRuntime.shutdown();
         }
     }
+
     @Test
     public void testMaxByLengthWindowProcessor10() throws InterruptedException {
         log.info("Testing maxByLengthWindowProcessor with no of events less than window size for float type parameter");
@@ -107,7 +108,7 @@ public class MaxByLengthWindowProcessorTestCase {
                     EventPrinter.print(events);
 
                     for (Event event : events) {
-                      //  assertArrayEquals((Object[]) results.get(count), event.getData());
+                        //  assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
                     }
                 }
@@ -252,8 +253,8 @@ public class MaxByLengthWindowProcessorTestCase {
             cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
             cseEventStreamHandler.send(new Object[]{"WSO2", 700f, 142});
 
-            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2",43});
-            twitterStreamHandler.send(new Object[]{"User1", "Hello SIDDHI", "WSO2",45});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2", 43});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello SIDDHI", "WSO2", 45});
 
             cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
             cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
@@ -306,9 +307,6 @@ public class MaxByLengthWindowProcessorTestCase {
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
             twitterStreamHandler.send(new Object[]{104, "Hello CEP", "WSO2"});
 
-//            cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
-//            cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
-//            cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
 
         } finally {
             executionPlanRuntime.shutdown();
@@ -334,16 +332,7 @@ public class MaxByLengthWindowProcessorTestCase {
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
-//            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-//
-//                @Override
-//                public void receive(Event[] events) {
-//
-//                    System.out.print("output event: ");
-//                    EventPrinter.print(events);
-//
-//                }
-//            });
+
             executionPlanRuntime.addCallback("query1", new QueryCallback() {
                 @Override
                 public void receive(long l, Event[] events, Event[] events1) {
@@ -366,17 +355,12 @@ public class MaxByLengthWindowProcessorTestCase {
             System.out.println("------------------------------------");
             cseEventStreamHandler.send(new Object[]{"XXX", 70.5f, 2});
 
-//          cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
-//          cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
-//          cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
-
 
         } finally {
             executionPlanRuntime.shutdown();
         }
 
     }
-
 
 
 }

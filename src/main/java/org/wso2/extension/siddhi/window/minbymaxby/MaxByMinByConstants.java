@@ -10,7 +10,9 @@ public class MaxByMinByConstants {
     public static final String MaxByTimeBatch = "MaxByTimeBatch";
     public static final String MinByTime = "MinByTime";
     public static final String MaxByTime = "MaxByTime";
-
-
+    public static final String MinByLengthBatch = "MinByLengthBatch";
+    public static final String MaxByLengthBatch = "MaxByLengthBatch";
+    public static final String MinByLength = "MinByLength";
+    public static final String MaxByLength = "MaxByLength";
 
 }

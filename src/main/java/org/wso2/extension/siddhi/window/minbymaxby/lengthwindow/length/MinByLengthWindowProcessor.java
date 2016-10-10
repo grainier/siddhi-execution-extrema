@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.length;
 
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
@@ -28,7 +28,7 @@ public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor 
 
     public MinByLengthWindowProcessor() {
         super.minByMaxByExecutorType = MaxByMinByConstants.MIN_BY;
-        super.minByMaxByExtensionType=MaxByMinByConstants.MinByLength;
+        super.minByMaxByExtensionType = MaxByMinByConstants.MinByLength;
     }
 
 }

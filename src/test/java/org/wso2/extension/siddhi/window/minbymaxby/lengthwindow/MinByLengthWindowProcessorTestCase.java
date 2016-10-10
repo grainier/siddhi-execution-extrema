@@ -16,9 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
 
-import junit.framework.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
@@ -108,7 +107,7 @@ public class MinByLengthWindowProcessorTestCase {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
                     for (Event event : events) {
-                       // assertArrayEquals((Object[]) results.get(count), event.getData());
+                        // assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
                     }
                 }

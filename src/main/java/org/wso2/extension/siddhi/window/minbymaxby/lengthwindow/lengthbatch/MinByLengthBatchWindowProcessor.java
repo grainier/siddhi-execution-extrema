@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch;
 
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
@@ -25,7 +25,7 @@ import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
     public MinByLengthBatchWindowProcessor() {
         super.minByMaxByExecutorType = MaxByMinByConstants.MIN_BY;
-        super.minByMaxByExtensionType=MaxByMinByConstants.MinByLengthBatch;
+        super.minByMaxByExtensionType = MaxByMinByConstants.MinByLengthBatch;
 
     }
 

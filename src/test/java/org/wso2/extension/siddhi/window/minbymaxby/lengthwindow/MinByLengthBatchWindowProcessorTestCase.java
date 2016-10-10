@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -180,8 +180,6 @@ public class MinByLengthBatchWindowProcessorTestCase {
         log.info("Testing minByLengthBatchWindowProcessor with no of events greater than window size for float type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
-
-        //siddhiManager.setExtension("unique:minByLengthBatch", MinByLengthBatchWindowProcessor.class);
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLengthBatch(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";

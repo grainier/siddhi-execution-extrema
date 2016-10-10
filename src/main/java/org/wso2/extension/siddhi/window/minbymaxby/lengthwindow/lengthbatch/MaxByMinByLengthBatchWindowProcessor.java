@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch;
 
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByExecutor;
@@ -43,12 +43,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 
 /**
  * Created by mathuriga on 29/09/16.
  */
-public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implements FindableProcessor {
+public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implements FindableProcessor {
     private int length;
     private int count = 0;
     protected String minByMaxByExecutorType;
@@ -60,7 +59,6 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     private MaxByMinByExecutor minByMaxByExecutor;
     private StreamEvent oldEvent;
     private StreamEvent resultEvent;
-    ComplexEventChunk<StreamEvent> resultStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
     private StreamEvent expiredResultEvent;
     private StreamEvent resetEvent;
 
@@ -73,11 +71,11 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
         this.executionPlanContext = executionPlanContext;
-        minByMaxByExecutor=new MaxByMinByExecutor();
+        minByMaxByExecutor = new MaxByMinByExecutor();
         if (minByMaxByExecutorType == "MIN") {
             minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        }else{
-                minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
+        } else {
+            minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         }
 
         if (attributeExpressionExecutors.length != 2) {
@@ -104,12 +102,12 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
                     ", but found " + attributeType.toString());
         }
 
-            variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
-            if (attributeExpressionExecutors.length == 2) {
-                variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-                minByMaxByExecutorAttribute = variableExpressionExecutors[0];
-                length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-            }
+        variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
+        if (attributeExpressionExecutors.length == 2) {
+            variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
+            minByMaxByExecutorAttribute = variableExpressionExecutors[0];
+            length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
+        }
 
     }
 
@@ -125,40 +123,39 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
                 if (count == 0) {
                     outputStreamEventChunk.clear();
-                    resultStreamEventChunk.clear();
-
-                    oldEvent=null;
+                    oldEvent = null;
                     //clonedResultEvent=resultEvent;
                 }
 
-                if(minByMaxByExecutorType.equals(MaxByMinByConstants.MAX_BY)) {
+                //Get the event which hold the minimum or maximum event
+
+                if (minByMaxByExecutorType.equals(MaxByMinByConstants.MAX_BY)) {
                     resultEvent = MaxByMinByExecutor.getMaxEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
-                    oldEvent=resultEvent;
-                }
-                else if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)){
-                    resultEvent=MaxByMinByExecutor.getMinEventBatchProcessor(currentEvent,oldEvent, minByMaxByExecutorAttribute);
-                    oldEvent=resultEvent;
+                    oldEvent = resultEvent;
+                } else if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
+                    resultEvent = MaxByMinByExecutor.getMinEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
+                    oldEvent = resultEvent;
                 }
 
                 count++;
                 if (count == length) {
-                    //get the results
-                     if(resultEvent!=null){
-                         if(expiredResultEvent!=null) {
-                             expiredEventChunk.clear();
-                             outputStreamEventChunk.add(expiredResultEvent);
-                             outputStreamEventChunk.add(resetEvent);
-                             //resultStreamEventChunk.add(resultEvent);
-                         }
-                         outputStreamEventChunk.add(resultEvent);
-                         expiredResultEvent=streamEventCloner.copyStreamEvent(resultEvent);
-                         expiredResultEvent.setTimestamp(currentTime);
-                         expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
-                         expiredEventChunk.add(expiredResultEvent);
-                         resetEvent=streamEventCloner.copyStreamEvent(resultEvent);
-                         resetEvent.setType(StateEvent.Type.RESET);
-                         System.out.println(outputStreamEventChunk);
-                     }
+
+                    if (resultEvent != null) {
+                        if (expiredResultEvent != null) {
+                            expiredEventChunk.clear();
+                            outputStreamEventChunk.add(expiredResultEvent);
+                            outputStreamEventChunk.add(resetEvent);
+
+                        }
+                        outputStreamEventChunk.add(resultEvent);
+                        expiredResultEvent = streamEventCloner.copyStreamEvent(resultEvent);
+                        expiredResultEvent.setTimestamp(currentTime);
+                        expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
+                        expiredEventChunk.add(expiredResultEvent);
+                        resetEvent = streamEventCloner.copyStreamEvent(resultEvent);
+                        resetEvent.setType(StateEvent.Type.RESET);
+                        System.out.println(outputStreamEventChunk);
+                    }
                     count = 0;
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
@@ -187,12 +184,26 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     public Object[] currentState() {
-        return null;
+        return this.expiredEventChunk != null ? new Object[]{this.resultEvent, this.expiredEventChunk.getFirst(), Integer.valueOf(this.count), this.resetEvent} : new Object[]{this.resultEvent, Integer.valueOf(this.count), this.resetEvent};
     }
 
     @Override
     public void restoreState(Object[] state) {
-//
+        if (state.length > 3) {
+            this.resultEvent = null;
+            Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
+            resultEvent = (StreamEvent) stateEntry.getValue();
+            Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
+            this.count = ((Integer) state[2]).intValue();
+            this.resetEvent = (StreamEvent) state[3];
+        } else {
+            this.resultEvent = null;
+            Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
+            resultEvent = (StreamEvent) stateEntry.getValue();
+            Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
+            this.count = ((Integer) state[1]).intValue();
+            this.resetEvent = (StreamEvent) state[2];
+        }
     }
 
     @Override
@@ -203,6 +214,6 @@ public class MaxByMinByLengthBatchWindowProcessor extends WindowProcessor implem
 
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> list, Map<String, EventTable> map) {
-        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,executionPlanContext,list,map);
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext, list, map);
     }
 }

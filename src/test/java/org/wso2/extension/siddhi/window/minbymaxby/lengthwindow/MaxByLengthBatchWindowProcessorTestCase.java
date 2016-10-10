@@ -16,17 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.extension.siddhi.window.minbymaxby;
+package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
 
-import junit.framework.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
-import org.wso2.siddhi.core.event.stream.StreamEvent;
-import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
@@ -213,8 +210,8 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
             cseEventStreamHandler.send(new Object[]{"WSO2", 700f, 142});
 
-            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2",23});
-            twitterStreamHandler.send(new Object[]{"User1", "Hello SIDDHI", "WSO2",56});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2", 23});
+            twitterStreamHandler.send(new Object[]{"User1", "Hello SIDDHI", "WSO2", 56});
 
             cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
             cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
@@ -312,11 +309,6 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
             cseEventStreamHandler.send(new Object[]{"WSO2", 900f, 14});
             cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
-
-//          cseEventStreamHandler.send(new Object[]{"ACD", 60.5f, 21});
-//          cseEventStreamHandler.send(new Object[]{"XXX", 700f, 14});
-//          cseEventStreamHandler.send(new Object[]{"WSO2", 60.5f, 222});
-
 
         } finally {
             executionPlanRuntime.shutdown();
