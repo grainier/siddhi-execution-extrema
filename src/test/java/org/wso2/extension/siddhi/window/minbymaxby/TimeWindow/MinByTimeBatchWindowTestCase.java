@@ -20,6 +20,7 @@
 package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 
 import junit.framework.Assert;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
@@ -245,6 +246,7 @@ public class MinByTimeBatchWindowTestCase {
                     }
                     if (removeEvents != null) {
                         removeEventCount += (removeEvents.length);
+                        Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     }
                     eventArrived = true;
                 }
