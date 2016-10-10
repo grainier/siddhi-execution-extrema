@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractKStreamProcessorExtension extends StreamProcessor implements FindableProcessor {
+public abstract class AbstractKStreamProcessorExtension extends StreamProcessor {
     protected boolean isTopK;
     private int querySize;
 
@@ -197,29 +197,6 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
             if (state.length == 5) {
                 expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[4];
             }
-        }
-    }
-
-    @Override
-    public StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        synchronized (this) {
-            return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
-        }
-    }
-
-    @Override
-    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
-                                  ExecutionPlanContext executionPlanContext,
-                                  List<VariableExpressionExecutor> variableExpressionExecutors,
-                                  Map<String, EventTable> eventTableMap) {
-        synchronized (this) {
-            if (expiredEventChunk == null) {
-                expiredEventChunk = new ComplexEventChunk<StreamEvent>(true);
-            }
-            return OperatorParser.constructOperator(
-                    expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext,
-                    variableExpressionExecutors, eventTableMap
-            );
         }
     }
 }
