@@ -47,8 +47,8 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
     private VariableExpressionExecutor attrVariableExpressionExecutor;
     private AbstractTopKBottomKFinder<Object> topKBottomKFinder;
 
+    private Object[] lastOutputData;
     private StreamEvent lastStreamEvent = null;
-    private StreamEvent resetEvent = null;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
 
     @Override
@@ -57,6 +57,11 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
         String namePrefix = (isTopK ? "Top" : "Bottom");
         if (attributeExpressionExecutors.length == 2) {
             expiredEventChunk = new ComplexEventChunk<StreamEvent>(true);
+            if (isTopK) {
+                topKBottomKFinder = new TopKFinder<Object>();
+            } else {
+                topKBottomKFinder = new BottomKFinder<Object>();
+            }
         } else {
             throw new ExecutionPlanValidationException("2 arguments should be " +
                     "passed to " + namePrefix + "KStreamProcessor, but found " + attributeExpressionExecutors.length);
@@ -100,12 +105,8 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
         ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
-            if (isTopK) {
-                topKBottomKFinder = new TopKFinder<Object>();
-            } else {
-                topKBottomKFinder = new BottomKFinder<Object>();
-            }
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
+            StreamEvent resetEvent = null;
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
@@ -114,43 +115,54 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                     lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
                     topKBottomKFinder.offer(attrVariableExpressionExecutor.execute(clonedStreamEvent));
+                } else if (streamEvent.getType() == ComplexEvent.Type.EXPIRED) {
+                    topKBottomKFinder.offer(attrVariableExpressionExecutor.execute(clonedStreamEvent), -1);
+                } else if (streamEvent.getType() == ComplexEvent.Type.RESET) {
+                    // Setting the reset event to be used in the end of the window
+                    resetEvent = streamEventCloner.copyStreamEvent(clonedStreamEvent);
                 }
             }
 
-            // Adding expired events
-            if (outputExpectsExpiredEvents && expiredEventChunk.getFirst() != null) {
-                outputStreamEventChunk.add(expiredEventChunk.getFirst());
+            if (expiredEventChunk.getFirst() != null) {
+                // Adding expired events
+                while (expiredEventChunk.hasNext()) {
+                    outputStreamEventChunk.add(expiredEventChunk.next());
+                }
                 expiredEventChunk.clear();
             }
 
             // Adding the reset event
-            outputStreamEventChunk.add(resetEvent);
-            resetEvent = null;
+            if (resetEvent != null) {
+                outputStreamEventChunk.add(resetEvent);
+            }
 
             // Adding the last event with the topK frequencies for the window
             List<Counter<Object>> topKCounters = topKBottomKFinder.get(querySize);
             Object[] outputStreamEventData = new Object[2 * querySize];
+            boolean sendEvents = false;
             int i = 0;
             while (i < topKCounters.size()) {
                 Counter<Object> topKCounter = topKCounters.get(i);
                 outputStreamEventData[2 * i] = topKCounter.getItem();
                 outputStreamEventData[2 * i + 1] = topKCounter.getCount();
+                if (lastOutputData == null ||
+                        lastOutputData[2 * i] != outputStreamEventData[2 * i] ||
+                        lastOutputData[2 * i + 1] != outputStreamEventData[2 * i + 1]) {
+                     sendEvents = true;
+                }
                 i++;
             }
-            complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
-            outputStreamEventChunk.add(lastStreamEvent);
+            if (sendEvents) {
+                lastOutputData = outputStreamEventData;
+                complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
+                outputStreamEventChunk.add(lastStreamEvent);
 
-            // Setting the event expired in this window
-            StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-            expiredStreamEvent.setTimestamp(currentTime);
-            expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
-            expiredEventChunk.add(expiredStreamEvent);
-            lastStreamEvent = null;
-
-            // Setting the reset event to be used in the end of the window
-            if (resetEvent == null) {
-                resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
-                resetEvent.setType(ComplexEvent.Type.RESET);
+                // Setting the event expired in this window
+                StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                expiredStreamEvent.setTimestamp(currentTime);
+                expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                expiredEventChunk.add(expiredStreamEvent);
+                lastStreamEvent = null;
             }
         }
 
@@ -173,9 +185,9 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
     public Object[] currentState() {
         synchronized (this) {
             if (outputExpectsExpiredEvents) {
-                return new Object[]{topKBottomKFinder, querySize, lastStreamEvent, resetEvent, expiredEventChunk};
+                return new Object[]{topKBottomKFinder, querySize, lastStreamEvent, lastOutputData, expiredEventChunk};
             } else {
-                return new Object[]{topKBottomKFinder, querySize, lastStreamEvent, resetEvent};
+                return new Object[]{topKBottomKFinder, querySize, lastStreamEvent, lastOutputData};
             }
         }
     }
@@ -187,7 +199,7 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
             querySize = (Integer) state[1];
 
             lastStreamEvent = (StreamEvent) state[2];
-            resetEvent = (StreamEvent) state[3];
+            lastOutputData = (Object[]) state[3];
             if (state.length == 5) {
                 expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[4];
             }

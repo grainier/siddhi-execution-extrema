@@ -64,13 +64,21 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64L});
         // Time Window reset
         Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
+        // Time Window reset
+        Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 75L});
         inputHandler.send(new Object[]{"item4", 13L});
         // To get all the expired events
         Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(3, count);
+        Assert.assertEquals(4, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
@@ -103,13 +111,21 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64L});
         // Time Window reset
         Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
+        // Time Window reset
+        Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 65L});
         inputHandler.send(new Object[]{"item4", 23L});
         // To get all the expired events
         Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(3, count);
+        Assert.assertEquals(4, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
@@ -203,16 +219,7 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                     }
                     Assert.assertNull(removeEvents);
                 } else if (count == 1) {
-                    Assert.assertNotNull(inEvents);
-                    for (Event event : inEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertNull(event.getData(4));
-                        Assert.assertNull(event.getData(5));
-                        Assert.assertNull(event.getData(6));
-                        Assert.assertNull(event.getData(7));
-                        Assert.assertFalse(event.isExpired());
-                    }
+                    Assert.assertNull(inEvents);
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {
                         Assert.assertEquals("item3", event.getData(2));
@@ -224,6 +231,18 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertTrue(event.isExpired());
                     }
                 } else if (count == 2) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertNull(event.getData(4));
+                        Assert.assertNull(event.getData(5));
+                        Assert.assertNull(event.getData(6));
+                        Assert.assertNull(event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNull(removeEvents);
+                } else if (count == 3) {
                     Assert.assertNull(inEvents);
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {

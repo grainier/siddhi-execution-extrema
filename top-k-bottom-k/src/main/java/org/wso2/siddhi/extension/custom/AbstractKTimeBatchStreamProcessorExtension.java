@@ -60,6 +60,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     private Scheduler scheduler;
     private AbstractTopKBottomKFinder<Object> topKBottomKFinder;
 
+    private Object[] lastOutputData;
     private StreamEvent lastStreamEvent = null;
     private StreamEvent resetEvent = null;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
@@ -168,36 +169,47 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
 
                     // End of window tasks
                     if (streamEvent.getType() == ComplexEvent.Type.TIMER) {
-                        // Adding the expired events
-                        if (outputExpectsExpiredEvents && expiredEventChunk.getFirst() != null) {
-                            outputStreamEventChunk.add(expiredEventChunk.getFirst());
-                            expiredEventChunk.clear();
+                        if (expiredEventChunk.getFirst() != null) {
+                            // Adding the expired events
+                            if (outputExpectsExpiredEvents) {
+                                outputStreamEventChunk.add(expiredEventChunk.getFirst());
+                                expiredEventChunk.clear();
+                            }
+
+                            // Adding the reset event
+                            outputStreamEventChunk.add(resetEvent);
+                            resetEvent = null;
                         }
 
                         // Adding the last event with the topK frequencies for the window
                         if (lastStreamEvent != null) {
-                            // Adding the reset event
-                            outputStreamEventChunk.add(resetEvent);
-                            resetEvent = null;
-
                             Object[] outputStreamEventData = new Object[2 * querySize];
                             List<Counter<Object>> topKCounters = topKBottomKFinder.get(querySize);
+                            boolean sendEvents = false;
                             int i = 0;
                             while (i < topKCounters.size()) {
                                 Counter<Object> topKCounter = topKCounters.get(i);
                                 outputStreamEventData[2 * i] = topKCounter.getItem();
                                 outputStreamEventData[2 * i + 1] = topKCounter.getCount();
+                                if (lastOutputData == null ||
+                                        lastOutputData[2 * i] != outputStreamEventData[2 * i] ||
+                                        lastOutputData[2 * i + 1] != outputStreamEventData[2 * i + 1]) {
+                                    sendEvents = true;
+                                }
                                 i++;
                             }
-                            complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
-                            outputStreamEventChunk.add(lastStreamEvent);
+                            if (sendEvents) {
+                                lastOutputData = outputStreamEventData;
+                                complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
+                                outputStreamEventChunk.add(lastStreamEvent);
 
-                            // Setting the event to be expired in the next window
-                            StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                            expiredStreamEvent.setTimestamp(currentTime);
-                            expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
-                            expiredEventChunk.add(expiredStreamEvent);
-                            lastStreamEvent = null;
+                                // Setting the event to be expired in the next window
+                                StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                                expiredStreamEvent.setTimestamp(currentTime);
+                                expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                                expiredEventChunk.add(expiredStreamEvent);
+                                lastStreamEvent = null;
+                            }
                         }
 
                         // Resetting window

@@ -57,6 +57,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     private VariableExpressionExecutor attrVariableExpressionExecutor;
     private AbstractTopKBottomKFinder<Object> topKBottomKFinder;
 
+    private Object[] lastOutputData;
     private StreamEvent lastStreamEvent = null;
     private StreamEvent resetEvent = null;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
@@ -145,35 +146,46 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
 
                 // Window end tasks
                 if (count == windowLength) {
-                    // Adding expired events
-                    if (outputExpectsExpiredEvents && expiredEventChunk.getFirst() != null) {
-                        outputStreamEventChunk.add(expiredEventChunk.getFirst());
-                        expiredEventChunk.clear();
-                    }
+                    if (expiredEventChunk.getFirst() != null) {
+                        // Adding expired events
+                        if (outputExpectsExpiredEvents) {
+                            outputStreamEventChunk.add(expiredEventChunk.getFirst());
+                            expiredEventChunk.clear();
+                        }
 
-                    // Adding the reset event
-                    outputStreamEventChunk.add(resetEvent);
-                    resetEvent = null;
+                        // Adding the reset event
+                        outputStreamEventChunk.add(resetEvent);
+                        resetEvent = null;
+                    }
 
                     // Adding the last event with the topK frequencies for the window
                     List<Counter<Object>> topKCounters = topKBottomKFinder.get(querySize);
                     Object[] outputStreamEventData = new Object[2 * querySize];
+                    boolean sendEvents = false;
                     int i = 0;
                     while (i < topKCounters.size()) {
                         Counter<Object> topKCounter = topKCounters.get(i);
                         outputStreamEventData[2 * i] = topKCounter.getItem();
                         outputStreamEventData[2 * i + 1] = topKCounter.getCount();
+                        if (lastOutputData == null ||
+                                lastOutputData[2 * i] != outputStreamEventData[2 * i] ||
+                                lastOutputData[2 * i + 1] != outputStreamEventData[2 * i + 1]) {
+                            sendEvents = true;
+                        }
                         i++;
                     }
-                    complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
-                    outputStreamEventChunk.add(lastStreamEvent);
+                    if (sendEvents) {
+                        lastOutputData = outputStreamEventData;
+                        complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
+                        outputStreamEventChunk.add(lastStreamEvent);
 
-                    // Setting the event expired in this window
-                    StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                    expiredStreamEvent.setTimestamp(currentTime);
-                    expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
-                    expiredEventChunk.add(expiredStreamEvent);
-                    lastStreamEvent = null;
+                        // Setting the event expired in this window
+                        StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                        expiredStreamEvent.setTimestamp(currentTime);
+                        expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
+                        expiredEventChunk.add(expiredStreamEvent);
+                        lastStreamEvent = null;
+                    }
 
                     // Resetting window
                     if (isTopK) {

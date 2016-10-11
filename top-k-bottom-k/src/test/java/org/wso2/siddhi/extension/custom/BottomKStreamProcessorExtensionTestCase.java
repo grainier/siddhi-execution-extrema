@@ -69,16 +69,7 @@ public class BottomKStreamProcessorExtensionTestCase {
                     }
                     Assert.assertNull(removeEvents);
                 } else if (count == 1) {
-                    Assert.assertNotNull(inEvents);
-                    for (Event event : inEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertEquals("item5", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item6", event.getData(6));
-                        Assert.assertEquals(2L, event.getData(7));
-                        Assert.assertFalse(event.isExpired());
-                    }
+                    Assert.assertNull(inEvents);
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {
                         Assert.assertEquals("item3", event.getData(2));
@@ -89,6 +80,18 @@ public class BottomKStreamProcessorExtensionTestCase {
                         Assert.assertEquals(3L, event.getData(7));
                         Assert.assertTrue(event.isExpired());
                     }
+                } else if (count == 2) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertEquals("item5", event.getData(4));
+                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals("item6", event.getData(6));
+                        Assert.assertEquals(2L, event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNull(removeEvents);
                 } else {
                     Assert.fail();
                 }
@@ -106,6 +109,13 @@ public class BottomKStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item2", 25L});
         inputHandler.send(new Object[]{"item3", 64L});
         // Length Window reset
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
+        // Length Window reset
         inputHandler.send(new Object[]{"item4", 65L});
         inputHandler.send(new Object[]{"item5", 45L});
         inputHandler.send(new Object[]{"item6", 34L});
@@ -114,7 +124,7 @@ public class BottomKStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item6", 23L});
 
         Thread.sleep(1100);
-        Assert.assertEquals(2, count);
+        Assert.assertEquals(3, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }

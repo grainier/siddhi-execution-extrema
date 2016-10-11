@@ -64,6 +64,14 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 64L});
         // Time Window reset
         Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
+        // Time Window reset
+        Thread.sleep(1100);
         inputHandler.send(new Object[]{"item4", 14L});
         inputHandler.send(new Object[]{"item4", 73L});
         // To get all the expired events
@@ -94,6 +102,14 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         inputHandler.send(new Object[]{"item3", 61L});
         inputHandler.send(new Object[]{"item3", 44L});
         // Start time
+        Thread.sleep(1100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        inputHandler.send(new Object[]{"item1", 13L});
+        inputHandler.send(new Object[]{"item2", 65L});
+        inputHandler.send(new Object[]{"item1", 74L});
+        inputHandler.send(new Object[]{"item2", 25L});
+        inputHandler.send(new Object[]{"item3", 64L});
+        // Time Window reset
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"item1", 10L});
         inputHandler.send(new Object[]{"item1", 13L});
@@ -203,16 +219,7 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
                     }
                     Assert.assertNull(removeEvents);
                 } else if (count == 1) {
-                    Assert.assertNotNull(inEvents);
-                    for (Event event : inEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertNull(event.getData(4));
-                        Assert.assertNull(event.getData(5));
-                        Assert.assertNull(event.getData(6));
-                        Assert.assertNull(event.getData(7));
-                        Assert.assertFalse(event.isExpired());
-                    }
+                    Assert.assertNull(inEvents);
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {
                         Assert.assertEquals("item1", event.getData(2));
@@ -223,6 +230,18 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals(1L, event.getData(7));
                         Assert.assertTrue(event.isExpired());
                     }
+                } else if (count == 2) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertNull(event.getData(4));
+                        Assert.assertNull(event.getData(5));
+                        Assert.assertNull(event.getData(6));
+                        Assert.assertNull(event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNull(removeEvents);
                 } else if (count == 2) {
                     Assert.assertNull(inEvents);
                     Assert.assertNotNull(removeEvents);
