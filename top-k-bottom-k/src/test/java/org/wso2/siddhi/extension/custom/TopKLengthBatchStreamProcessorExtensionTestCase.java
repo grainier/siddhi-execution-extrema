@@ -92,8 +92,6 @@ public class TopKLengthBatchStreamProcessorExtensionTestCase {
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNull(removeEvents);
-                } else {
-                    Assert.fail();
                 }
                 count++;
             }

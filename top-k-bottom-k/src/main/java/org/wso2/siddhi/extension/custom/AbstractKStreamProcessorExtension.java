@@ -162,7 +162,6 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
                 expiredStreamEvent.setTimestamp(currentTime);
                 expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
                 expiredEventChunk.add(expiredStreamEvent);
-                lastStreamEvent = null;
             }
         }
 

@@ -92,8 +92,6 @@ public class TopKStreamProcessorExtensionTestCase {
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNull(removeEvents);
-                } else {
-                    Assert.fail();
                 }
                 count++;
             }
@@ -125,6 +123,84 @@ public class TopKStreamProcessorExtensionTestCase {
 
         Thread.sleep(1000);
         Assert.assertEquals(3, count);
+        Assert.assertTrue(eventArrived);
+        executionPlanRuntime.shutdown();
+    }
+
+    @Test
+    public void testTopKStreamProcessorExtensionWithTimeWindow() throws InterruptedException {
+        log.info("BottomKStreamProcessor TestCase 2");
+        SiddhiManager siddhiManager = new SiddhiManager();
+
+        String inStreamDefinition = "define stream inputStream (item string, price long);";
+        String query = ("@info(name = 'query1') from inputStream#window.time(1 sec)#custom:topK(item, 3) " +
+                "insert all events into outputStream;");
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
+
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                eventArrived = true;
+                if (count ==2) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item1", event.getData(2));
+                        Assert.assertEquals(2L, event.getData(3));
+                        Assert.assertEquals("item2", event.getData(4));
+                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNotNull(removeEvents);
+                    for (Event event : removeEvents) {
+                        Assert.assertEquals("item2", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item1", event.getData(4));
+                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertTrue(event.isExpired());
+                    }
+                } else if (count == 8) {
+                    Assert.assertNotNull(inEvents);
+                    for (Event event : inEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item5", event.getData(4));
+                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertEquals("item6", event.getData(6));
+                        Assert.assertEquals(1L, event.getData(7));
+                        Assert.assertFalse(event.isExpired());
+                    }
+                    Assert.assertNotNull(removeEvents);
+                    for (Event event : removeEvents) {
+                        Assert.assertEquals("item4", event.getData(2));
+                        Assert.assertEquals(1L, event.getData(3));
+                        Assert.assertEquals("item5", event.getData(4));
+                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertTrue(event.isExpired());
+                    }
+                }
+                count++;
+            }
+        });
+
+        InputHandler inputHandler = executionPlanRuntime.getInputHandler("inputStream");
+        executionPlanRuntime.start();
+
+        inputHandler.send(new Object[]{"item2", 65L});
+        Thread.sleep(100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        Thread.sleep(100);
+        inputHandler.send(new Object[]{"item1", 10L});
+        // Time Window reset
+        Thread.sleep(1000);
+        inputHandler.send(new Object[]{"item4", 65L});
+        Thread.sleep(100);
+        inputHandler.send(new Object[]{"item5", 45L});
+        Thread.sleep(100);
+        inputHandler.send(new Object[]{"item6", 34L});
+
+        Thread.sleep(1100);
+        Assert.assertEquals(12, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }

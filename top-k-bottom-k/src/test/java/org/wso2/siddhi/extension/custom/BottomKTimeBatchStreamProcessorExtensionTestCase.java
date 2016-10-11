@@ -160,8 +160,6 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals("item4", event.getData(0));
                         Assert.assertEquals("credit card", event.getData(1));
                         Assert.assertFalse(event.isExpired());
-                    } else {
-                        Assert.fail();
                     }
                 }
                 Assert.assertNull(removeEvents);
@@ -254,8 +252,6 @@ public class BottomKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertNull(event.getData(7));
                         Assert.assertTrue(event.isExpired());
                     }
-                } else {
-                    Assert.fail();
                 }
                 count++;
             }

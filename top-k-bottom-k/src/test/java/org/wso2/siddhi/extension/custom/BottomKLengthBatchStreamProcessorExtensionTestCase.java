@@ -92,8 +92,6 @@ public class BottomKLengthBatchStreamProcessorExtensionTestCase {
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNull(removeEvents);
-                } else {
-                    Assert.fail();
                 }
                 count++;
             }
@@ -159,8 +157,6 @@ public class BottomKLengthBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals("item4", event.getData(0));
                         Assert.assertEquals("credit card", event.getData(1));
                         Assert.assertFalse(event.isExpired());
-                    } else {
-                        Assert.fail();
                     }
                 }
                 Assert.assertNull(removeEvents);

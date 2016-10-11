@@ -78,7 +78,7 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(3, count);
+        Assert.assertEquals(4, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
@@ -125,7 +125,7 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
         Thread.sleep(1100);
 
         Thread.sleep(1000);
-        Assert.assertEquals(3, count);
+        Assert.assertEquals(4, count);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
@@ -160,8 +160,6 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertEquals("item4", event.getData(0));
                         Assert.assertEquals("credit card", event.getData(1));
                         Assert.assertFalse(event.isExpired());
-                    } else {
-                        Assert.fail();
                     }
                 }
                 Assert.assertNull(removeEvents);
@@ -254,8 +252,6 @@ public class TopKTimeBatchStreamProcessorExtensionTestCase {
                         Assert.assertNull(event.getData(7));
                         Assert.assertTrue(event.isExpired());
                     }
-                } else {
-                    Assert.fail();
                 }
                 count++;
             }
