@@ -11,7 +11,7 @@
 ####    Return Type: Return current and expired events.
 ####    Examples:minByLength(temp) returns the event which has minimum temp value recorded for all the events based on their arrival and expiry.
 ####
-### maxByLength has similar behaviour but it returns an event which has minimum value of given attribute within last windowLength events, and gets updated on every event arrival and expiry.
+#### maxByLength has similar behaviour but it returns an event which has minimum value of given attribute within last windowLength events, and gets updated on every event arrival and expiry.
 #
 ###maxBylengthBatch
 #
@@ -24,7 +24,7 @@
 ####    Return Type: Return current and expired events.
 ####   Examples: minByLengthBatch(temp) returns the event which has maximum temp value recorded for all the events based on their arrival and expiry.
 #
-### minBylengthBatch has similar behaviour but it returns an event which has maximum value of given attribute up to windowLength events, and gets updated on every windowLength event arrival.
+#### minBylengthBatch has similar behaviour but it returns an event which has maximum value of given attribute up to windowLength events, and gets updated on every windowLength event arrival.
 #
 ###minBytime
 #
@@ -37,7 +37,7 @@
 ####    Return Type: Return current and expired events.
 ####    Examples: minByTime(temp) returns the event which has minimum temp value recorded for all the events based on their arrival time and expiry.
 #
-### maxByTime has similar behaviour but it returns an event which has minimum value of given attribute for that arrived during last windowTime period, and gets updated on every event arrival and expiry.
+#### maxByTime has similar behaviour but it returns an event which has minimum value of given attribute for that arrived during last windowTime period, and gets updated on every event arrival and expiry.
 #
 ### maxBytimeBatch
 #
@@ -50,7 +50,7 @@
 ####    Return Type: Return current and expired events.
 ####    Examples:  minByTimeBatch(temp) returns the event which has maximum temp value recorded for all the events based on their arrival time and expiry.
 #
-### maxByTimeBatch has similar behaviour but it returns an event which has maximum value of given attribute arrived between windowTime periods, and gets updated for every windowTime.
+#### maxByTimeBatch has similar behaviour but it returns an event which has maximum value of given attribute arrived between windowTime periods, and gets updated for every windowTime.
 #
 #
 #
