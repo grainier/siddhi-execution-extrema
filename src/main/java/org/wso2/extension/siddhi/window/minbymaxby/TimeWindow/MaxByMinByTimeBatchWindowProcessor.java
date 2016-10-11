@@ -175,31 +175,34 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             }
             streamEventChunk.clear();
             if (sendEvents) {
-                if (outputExpectsExpiredEvents) {
-                    if (expiredEventChunk.getFirst() != null) {
-                        while (expiredEventChunk.hasNext()) {
-                            StreamEvent expiredEvent = expiredEventChunk.next();
-                            expiredEvent.setTimestamp(currentTime);
-                        }
+                if (expiredEventChunk.getFirst() != null) {
+                    while (expiredEventChunk.hasNext()) {
+                        StreamEvent expiredEvent = expiredEventChunk.next();
+                        expiredEvent.setTimestamp(currentTime);
+                    }
+                    if(outputExpectsExpiredEvents){
                         streamEventChunk.add(expiredEventChunk.getFirst());
                     }
+                    resetEvent = streamEventCloner.copyStreamEvent(expiredEventChunk.getFirst());
+                    resetEvent.setType(ComplexEvent.Type.RESET);
+                        // add reset event before the current events
+                    if (resetEvent != null){
+                            streamEventChunk.add(resetEvent);
+                        }
+                    resetEvent = null;
                 }
+
                 if (expiredEventChunk != null) {
                     expiredEventChunk.clear();
                 }
                 if (currentEvent != null) {
-
-                    // add reset event in front of current events
-                    streamEventChunk.add(resetEvent);
-                    resetEvent = null;
                     StreamEvent toExpireEvent = streamEventCloner.copyStreamEvent(currentEvent);
                     toExpireEvent.setType(StreamEvent.Type.EXPIRED);
                     expiredEventChunk.add(toExpireEvent);
-                    resetEvent = streamEventCloner.copyStreamEvent(currentEvent);
-                    resetEvent.setType(ComplexEvent.Type.RESET);
                     streamEventChunk.add(currentEvent);
                 }
                 currentEvent = null;
+
             }
         }
         if (streamEventChunk.getFirst() != null) {
