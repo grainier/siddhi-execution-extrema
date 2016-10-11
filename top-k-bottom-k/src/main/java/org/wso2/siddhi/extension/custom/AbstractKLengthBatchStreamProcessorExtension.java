@@ -18,8 +18,6 @@
 
 package org.wso2.siddhi.extension.custom;
 
-import com.clearspring.analytics.stream.Counter;
-import com.clearspring.analytics.stream.StreamSummary;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -37,6 +35,10 @@ import org.wso2.siddhi.core.table.EventTable;
 import org.wso2.siddhi.core.util.collection.operator.Finder;
 import org.wso2.siddhi.core.util.collection.operator.MatchingMetaStateHolder;
 import org.wso2.siddhi.core.util.parser.OperatorParser;
+import org.wso2.siddhi.extension.custom.util.AbstractTopKBottomKFinder;
+import org.wso2.siddhi.extension.custom.util.BottomKFinder;
+import org.wso2.siddhi.extension.custom.util.Counter;
+import org.wso2.siddhi.extension.custom.util.TopKFinder;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
@@ -53,7 +55,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
 
     private int count;
     private VariableExpressionExecutor attrVariableExpressionExecutor;
-    private StreamSummary<Object> topKFinder;
+    private AbstractTopKBottomKFinder<Object> topKBottomKFinder;
 
     private StreamEvent lastStreamEvent = null;
     private StreamEvent resetEvent = null;
@@ -85,7 +87,11 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
             Attribute.Type attributeType = attributeExpressionExecutors[1].getReturnType();
             if (attributeType == Attribute.Type.INT) {
                 windowLength = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
-                topKFinder = new StreamSummary<Object>(windowLength);
+                if (isTopK) {
+                    topKBottomKFinder = new TopKFinder<Object>(windowLength);
+                } else {
+                    topKBottomKFinder = new BottomKFinder<Object>(windowLength);
+                }
             } else {
                 throw new ExecutionPlanValidationException("Window length parameter for " +
                         namePrefix + "KLengthBatchStreamProcessor should be INT. but found " + attributeType);
@@ -126,7 +132,6 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
         ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
-            int frequencyCountMultiplier = (isTopK ? 1 : -1);
             while (streamEventChunk.hasNext()) {
                 StreamEvent streamEvent = streamEventChunk.next();
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
@@ -135,10 +140,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                 if (streamEvent.getType() == ComplexEvent.Type.CURRENT) {
                     count++;
                     lastStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                    topKFinder.offer(
-                            attrVariableExpressionExecutor.execute(clonedStreamEvent),
-                            frequencyCountMultiplier
-                    );
+                    topKBottomKFinder.offer(attrVariableExpressionExecutor.execute(clonedStreamEvent));
                 }
 
                 // Window end tasks
@@ -154,13 +156,13 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                     resetEvent = null;
 
                     // Adding the last event with the topK frequencies for the window
-                    List<Counter<Object>> topKCounters = topKFinder.topK(querySize);
+                    List<Counter<Object>> topKCounters = topKBottomKFinder.get(querySize);
                     Object[] outputStreamEventData = new Object[2 * querySize];
                     int i = 0;
                     while (i < topKCounters.size()) {
                         Counter<Object> topKCounter = topKCounters.get(i);
                         outputStreamEventData[2 * i] = topKCounter.getItem();
-                        outputStreamEventData[2 * i + 1] = topKCounter.getCount() * frequencyCountMultiplier;
+                        outputStreamEventData[2 * i + 1] = topKCounter.getCount();
                         i++;
                     }
                     complexEventPopulater.populateComplexEvent(lastStreamEvent, outputStreamEventData);
@@ -174,7 +176,11 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
                     lastStreamEvent = null;
 
                     // Resetting window
-                    topKFinder = new StreamSummary<Object>(windowLength);
+                    if (isTopK) {
+                        topKBottomKFinder = new TopKFinder<Object>(windowLength);
+                    } else {
+                        topKBottomKFinder = new BottomKFinder<Object>(windowLength);
+                    }
                     count = 0;
 
                     // Setting the reset event to be used in the end of the window
@@ -205,9 +211,9 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     public Object[] currentState() {
         synchronized (this) {
             if (outputExpectsExpiredEvents) {
-                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent, expiredEventChunk};
+                return new Object[]{topKBottomKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent, expiredEventChunk};
             } else {
-                return new Object[]{topKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent};
+                return new Object[]{topKBottomKFinder, windowLength, querySize, count, lastStreamEvent, resetEvent};
             }
         }
     }
@@ -215,7 +221,7 @@ public abstract class AbstractKLengthBatchStreamProcessorExtension extends Strea
     @Override
     public void restoreState(Object[] state) {
         synchronized (this) {
-            topKFinder = (StreamSummary<Object>) state[0];
+            topKBottomKFinder = (AbstractTopKBottomKFinder<Object>) state[0];
             windowLength = (Integer) state[1];
             querySize = (Integer) state[2];
             count = (Integer) state[3];

@@ -33,11 +33,6 @@
                 <version>${siddhi.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.orbit.com.clearspring.analytics</groupId>
-                <artifactId>stream</artifactId>
-                <version>${streamlib.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.log4j.wso2</groupId>
                 <artifactId>log4j</artifactId>
                 <version>${log4j.version}</version>
@@ -84,7 +79,6 @@
     <properties>
         <siddhi.version>3.1.3-SNAPSHOT</siddhi.version>
         <apache.felix.version>2.3.7</apache.felix.version>
-        <streamlib.version>2.9.5.wso2v1</streamlib.version>
         <log4j.version>1.2.17.wso2v1</log4j.version>
         <junit.version>4.10</junit.version>
     </properties>

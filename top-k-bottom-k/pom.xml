@@ -24,10 +24,6 @@
             <artifactId>siddhi-query-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.orbit.com.clearspring.analytics</groupId>
-            <artifactId>stream</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.log4j.wso2</groupId>
             <artifactId>log4j</artifactId>
         </dependency>
