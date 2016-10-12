@@ -20,12 +20,14 @@
 package org.wso2.siddhi.extension.custom.util;
 
 import junit.framework.Assert;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class BottomKFinderTestCase {
+    private static final Logger log = Logger.getLogger(BottomKFinderTestCase.class);
     AbstractTopKBottomKFinder<String> bottomKFinder;
 
     @Before
@@ -35,6 +37,8 @@ public class BottomKFinderTestCase {
 
     @Test
     public void testTopKLengthBatchStreamProcessorExtension() {
+        log.info("BottomKFinder TestCase 1");
+
         bottomKFinder.offer("item1");
         bottomKFinder.offer("item1");
         bottomKFinder.offer("item1");
