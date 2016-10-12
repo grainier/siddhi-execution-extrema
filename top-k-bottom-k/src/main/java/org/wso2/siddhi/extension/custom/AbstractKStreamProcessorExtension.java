@@ -155,7 +155,7 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
                 if (lastOutputData == null ||
                         lastOutputData[2 * i] != outputStreamEventData[2 * i] ||
                         lastOutputData[2 * i + 1] != outputStreamEventData[2 * i + 1]) {
-                     sendEvents = true;
+                    sendEvents = true;
                 }
                 i++;
             }

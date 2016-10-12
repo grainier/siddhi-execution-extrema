@@ -42,13 +42,13 @@ public class TopKStreamProcessorExtensionTestCase {
     }
 
     @Test
-    public void testTopKStreamProcessorExtensionWithLengthBatch() throws InterruptedException {
+    public void testTopKStreamProcessorExtensionWithLengthBatchAndCurrentEventsOnly() throws InterruptedException {
         log.info("TopKStreamProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String inStreamDefinition = "define stream inputStream (item string, price long);";
         String query = ("@info(name = 'query1') from inputStream#window.lengthBatch(6)#custom:topK(item, 3)  " +
-                "insert all events into outputStream;");
+                "insert into outputStream;");
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(inStreamDefinition + query);
 
         executionPlanRuntime.addCallback("query1", new QueryCallback() {
@@ -70,16 +70,7 @@ public class TopKStreamProcessorExtensionTestCase {
                     Assert.assertNull(removeEvents);
                 } else if (count == 1) {
                     Assert.assertNull(inEvents);
-                    Assert.assertNotNull(removeEvents);
-                    for (Event event : removeEvents) {
-                        Assert.assertEquals("item1", event.getData(2));
-                        Assert.assertEquals(3L, event.getData(3));
-                        Assert.assertEquals("item2", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item3", event.getData(6));
-                        Assert.assertEquals(1L, event.getData(7));
-                        Assert.assertTrue(event.isExpired());
-                    }
+                    Assert.assertNull(removeEvents);
                 } else if (count == 2) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
@@ -142,7 +133,7 @@ public class TopKStreamProcessorExtensionTestCase {
             public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
                 EventPrinter.print(timeStamp, inEvents, removeEvents);
                 eventArrived = true;
-                if (count ==2) {
+                if (count == 2) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
                         Assert.assertEquals("item1", event.getData(2));

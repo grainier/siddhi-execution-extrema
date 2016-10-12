@@ -18,8 +18,6 @@
 
 package org.wso2.siddhi.extension.custom;
 
-import org.wso2.siddhi.extension.custom.AbstractKTimeBatchStreamProcessorExtension;
-
 public class TopKTimeBatchStreamProcessorExtension extends AbstractKTimeBatchStreamProcessorExtension {
     public TopKTimeBatchStreamProcessorExtension() {
         isTopK = true;

@@ -18,8 +18,6 @@
 
 package org.wso2.siddhi.extension.custom;
 
-import org.wso2.siddhi.extension.custom.AbstractKLengthBatchStreamProcessorExtension;
-
 public class BottomKLengthBatchStreamProcessorExtension extends AbstractKLengthBatchStreamProcessorExtension {
     public BottomKLengthBatchStreamProcessorExtension() {
         isTopK = false;

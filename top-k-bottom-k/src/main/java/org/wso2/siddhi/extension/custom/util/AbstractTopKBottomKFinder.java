@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class AbstractTopKBottomKFinder<T> {
+    protected DoublyLinkedList<Bucket> bucketList;
     private int capacity;
     private HashMap<T, ListNode<Counter<T>>> counterMap;
-    protected DoublyLinkedList<Bucket> bucketList;
 
     /**
      * @param capacity Maximum number of unique items to keep
@@ -83,7 +83,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
     /**
      * Increase the frequency for the node specified and moves the counter to relevant bucket
      *
-     * @param counterNode The counter node to increase the frequency of
+     * @param counterNode    The counter node to increase the frequency of
      * @param incrementCount The increment size
      */
     private void incrementCounterForNode(ListNode<Counter<T>> counterNode, int incrementCount) {
@@ -150,7 +150,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
 
     /**
      * Bucket class
-     *
+     * <p>
      * Keeps a list of counter with the same of number of frequencies
      */
     public class Bucket {

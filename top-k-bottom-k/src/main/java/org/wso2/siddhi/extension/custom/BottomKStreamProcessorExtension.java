@@ -18,8 +18,6 @@
 
 package org.wso2.siddhi.extension.custom;
 
-import org.wso2.siddhi.extension.custom.AbstractKStreamProcessorExtension;
-
 public class BottomKStreamProcessorExtension extends AbstractKStreamProcessorExtension {
     public BottomKStreamProcessorExtension() {
         isTopK = false;
