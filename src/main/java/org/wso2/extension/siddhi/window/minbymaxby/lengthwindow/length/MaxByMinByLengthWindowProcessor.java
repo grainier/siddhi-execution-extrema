@@ -60,7 +60,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     private StreamEvent outputStreamEvent;
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
     StreamEvent toBeExpiredEvent = null;
-    
+
     public void setOutputStreamEvent(StreamEvent outputSreamEvent) {
         this.outputStreamEvent = outputSreamEvent;
     }
@@ -68,8 +68,8 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     /**
      * The init method of the WindowProcessor, this method will be called before other methods
      *
-     * @param expressionExecutors the executors of each function parameters
-     * @param executionPlanContext         the context of the execution plan
+     * @param expressionExecutors  the executors of each function parameters
+     * @param executionPlanContext the context of the execution plan
      */
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
@@ -121,8 +121,8 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     /**
      * The main processing method that will be called upon event arrival
      *
-     * @param complexEventChunk  the stream event chunk that need to be processed
-     * @param processor     the next processor to which the success events need to be passed
+     * @param complexEventChunk the stream event chunk that need to be processed
+     * @param processor         the next processor to which the success events need to be passed
      * @param streamEventCloner helps to clone the incoming event for local storage or modification
      */
     @Override
@@ -295,7 +295,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * matchingEvent and the given matching expression logic.
      *
      * @param expression                  the matching expression
-     * @param matchingMetaStateHolder    the meta structure of the incoming matchingEvent
+     * @param matchingMetaStateHolder     the meta structure of the incoming matchingEvent
      * @param executionPlanContext        current execution plan context
      * @param variableExpressionExecutors the list of variable ExpressionExecutors already created
      * @param eventTableMap               map of event tables

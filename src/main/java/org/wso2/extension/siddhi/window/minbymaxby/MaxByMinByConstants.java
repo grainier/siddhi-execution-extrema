@@ -33,5 +33,4 @@ public class MaxByMinByConstants {
     public static final String MaxByLengthBatch = "MaxByLengthBatch";
     public static final String MinByLength = "MinByLength";
     public static final String MaxByLength = "MaxByLength";
-
 }

@@ -71,8 +71,8 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /**
      * The init method of the WindowProcessor, this method will be called before other methods
      *
-     * @param expressionExecutors the executors of each function parameters
-     * @param executionPlanContext         the context of the execution plan
+     * @param expressionExecutors  the executors of each function parameters
+     * @param executionPlanContext the context of the execution plan
      */
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
@@ -259,11 +259,11 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
      * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
      * matchingEvent and the given matching expression logic.
      *
-     * @param expression                  the matching expression
-     * @param matchingMetaStateHolder     the meta structure of the incoming matchingEvent
-     * @param executionPlanContext        current execution plan context
-     * @param list                        the list of variable ExpressionExecutors already created
-     * @param map                         map of event tables
+     * @param expression              the matching expression
+     * @param matchingMetaStateHolder the meta structure of the incoming matchingEvent
+     * @param executionPlanContext    current execution plan context
+     * @param list                    the list of variable ExpressionExecutors already created
+     * @param map                     map of event tables
      * @return finder having the capability of finding events at the processor against the expression and incoming
      * matchingEvent
      */
