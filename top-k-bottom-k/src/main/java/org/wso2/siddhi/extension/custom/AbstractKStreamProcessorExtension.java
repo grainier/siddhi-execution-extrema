@@ -120,6 +120,13 @@ public abstract class AbstractKStreamProcessorExtension extends StreamProcessor 
                 } else if (streamEvent.getType() == ComplexEvent.Type.RESET) {
                     // Setting the reset event to be used in the end of the window
                     resetEvent = streamEventCloner.copyStreamEvent(clonedStreamEvent);
+
+                    // Resetting topK/bottomK finder for batch windows using RESET event
+                    if (isTopK) {
+                        topKBottomKFinder = new TopKFinder<Object>();
+                    } else {
+                        topKBottomKFinder = new BottomKFinder<Object>();
+                    }
                 }
             }
 
