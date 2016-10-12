@@ -42,12 +42,12 @@ import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
-
 import java.util.List;
 import java.util.Map;
 
 /**
  * Abstract class which gives the min/max event in a Time Batch Window
+ * according to a given attribute
  */
 
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
@@ -64,6 +64,12 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
     private StreamEvent currentEvent = null;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
 
+    /**
+     * The init method of the WindowProcessor, this method will be called before other methods
+     *
+     * @param attributeExpressionExecutors the executors of each function parameters
+     * @param executionPlanContext         the context of the execution plan
+     */
     @Override
     protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
@@ -138,6 +144,13 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         }
     }
 
+    /**
+     * The main processing method that will be called upon event arrival
+     *
+     * @param streamEventChunk  the stream event chunk that need to be processed
+     * @param nextProcessor     the next processor to which the success events need to be passed
+     * @param streamEventCloner helps to clone the incoming event for local storage or modification
+     */
     @Override
     protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
         synchronized (this) {
@@ -180,15 +193,15 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                         StreamEvent expiredEvent = expiredEventChunk.next();
                         expiredEvent.setTimestamp(currentTime);
                     }
-                    if(outputExpectsExpiredEvents){
+                    if (outputExpectsExpiredEvents) {
                         streamEventChunk.add(expiredEventChunk.getFirst());
                     }
                     resetEvent = streamEventCloner.copyStreamEvent(expiredEventChunk.getFirst());
                     resetEvent.setType(ComplexEvent.Type.RESET);
-                        // add reset event before the current events
-                    if (resetEvent != null){
-                            streamEventChunk.add(resetEvent);
-                        }
+                    // add reset event before the current events
+                    if (resetEvent != null) {
+                        streamEventChunk.add(resetEvent);
+                    }
                     resetEvent = null;
                 }
 
@@ -219,26 +232,53 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         return emitTime;
     }
 
+    /**
+     * The getScheduler method of the TimeWindowProcessor.
+     * Since scheduler is a private variable, setter method is for public access.
+     */
     @Override
     public Scheduler getScheduler() {
         return scheduler;
     }
 
+    /**
+     * The setScheduler method of the TimeWindowProcessor.
+     * Since scheduler is a private variable, setter method is for public access.
+     *
+     * @param scheduler the value of scheduler.
+     */
     @Override
     public void setScheduler(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
+    /**
+     * This will be called only once and this can be used to acquire
+     * required resources for the processing element.
+     * This will be called after initializing the system and before
+     * starting to process the events.
+     */
     @Override
     public void start() {
         //Do nothing
     }
 
+    /**
+     * This will be called only once and this can be used to release
+     * the acquired resources for processing.
+     * This will be called before shutting down the system.
+     */
     @Override
     public void stop() {
         //Do nothing
     }
 
+    /**
+     * Used to collect the serializable state of the processing element, that need to be
+     * persisted for the reconstructing the element to the same state on a different point of time
+     *
+     * @return stateful objects of the processing element as an array
+     */
     @Override
     public Object[] currentState() {
         if (expiredEventChunk != null) {
@@ -248,6 +288,13 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         }
     }
 
+    /**
+     * Used to restore serialized state of the processing element, for reconstructing
+     * the element to the same state as if was on a previous point of time.
+     *
+     * @param state the stateful objects of the element as an array on
+     *              the same order provided by currentState().
+     */
     @Override
     public void restoreState(Object[] state) {
         if (state.length > 2) {
@@ -261,18 +308,39 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         }
     }
 
+    /**
+     * To find events from the processor event pool, that the matches the matchingEvent based on finder logic.
+     *
+     * @param matchingEvent the event to be matched with the events at the processor
+     * @param finder        the execution element responsible for finding the corresponding events that matches
+     *                      the matchingEvent based on pool of events at Processor
+     * @return the matched events
+     */
     @Override
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
         return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
+    /**
+     * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
+     * matchingEvent and the given matching expression logic.
+     *
+     * @param expression                  the matching expression
+     * @param matchingMetaStateHolder     the meta structure of the incoming matchingEvent
+     * @param executionPlanContext        current execution plan context
+     * @param variableExpressionExecutors the list of variable ExpressionExecutors already created
+     * @param eventTableMap               map of event tables
+     * @return finder having the capability of finding events at the processor against the expression and incoming
+     * matchingEvent
+     */
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
                                   List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
         if (expiredEventChunk == null) {
             expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         }
-        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
+        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext,
+                variableExpressionExecutors, eventTableMap);
     }
 
 }

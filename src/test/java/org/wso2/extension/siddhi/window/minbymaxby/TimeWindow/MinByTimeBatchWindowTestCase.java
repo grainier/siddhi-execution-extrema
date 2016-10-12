@@ -60,28 +60,21 @@ public class MinByTimeBatchWindowTestCase {
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 
-//        executionPlanRuntime.addCallback("query1", new QueryCallback() {
-//            @Override
-//            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
-//                EventPrinter.print(timeStamp, inEvents, removeEvents);
-//                if (inEvents != null) {
-//                    inEventCount = inEventCount + inEvents.length;
-//                }
-//                if (removeEvents != null) {
-//                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
-//                    removeEventCount = removeEventCount + removeEvents.length;
-//                }
-//                eventArrived = true;
-//            }
-//
-//        });
-        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
             @Override
-            public void receive(Event[] events) {
-                EventPrinter.print(events);
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                if (inEvents != null) {
+                    inEventCount = inEventCount + inEvents.length;
+                }
+                if (removeEvents != null) {
+                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
+                    removeEventCount = removeEventCount + removeEvents.length;
+                }
+                eventArrived = true;
             }
-        });
 
+        });
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
         inputHandler.send(new Object[]{"IBM", 700f, 1});

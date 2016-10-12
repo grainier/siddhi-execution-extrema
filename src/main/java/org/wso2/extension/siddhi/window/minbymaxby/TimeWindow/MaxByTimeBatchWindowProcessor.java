@@ -22,8 +22,16 @@ package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
 /**
- * Output the max event corresponding to a given attribute in a Time Batch Window
+ * Sample Query:
+ * from inputStream#window.minbymaxby:maxbytimebatch(attribute1,1 sec)
+ * select attribute1, attribute2
+ * insert into outputStream;
+ * <p>
+ * Description:
+ * In the sample query given, 1 sec is the duration of the window and attribute1 is the maxBy attribute.
+ * According to the given attribute it will give the maximum event within given time.
  */
+
 public class MaxByTimeBatchWindowProcessor extends MaxByMinByTimeBatchWindowProcessor {
     public MaxByTimeBatchWindowProcessor() {
         maxByMinByType = MaxByMinByConstants.MAX_BY;
