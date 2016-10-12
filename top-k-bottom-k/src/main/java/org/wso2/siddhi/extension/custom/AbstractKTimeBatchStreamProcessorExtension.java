@@ -50,6 +50,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Sample Query (For topKLengthBatch implementation):
+ * from inputStream#custom:topKTimeBatch(attribute1, 1 sec, 3)
+ * select attribute1, attribute2
+ * insert into outputStream;
+ *
+ * Sample Query (For bottomKLengthBatch implementation):
+ * from inputStream#custom:bottomKTimeBatch(attribute1, 1 sec, 3)
+ * select attribute1, attribute2
+ * insert into outputStream;
+ *
+ * Description:
+ * In the example query given, 1 sec is the duration of the window, 3 is the k-value and attribute1 is the attribute of which the frequency is counted.
+ * The frequencies of the values received for the attribute given will be counted by this and the topK/bottomK values will be emitted per batch.
+ * Events will not emit if there is no change from the last send topK/bottomK results
+ */
 public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamProcessor implements SchedulingProcessor, FindableProcessor {
     protected boolean isTopK;
     private long windowTime;
@@ -65,6 +81,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
     private StreamEvent resetEvent = null;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
 
+    /**
+     * The init method of the AbstractKTimeBatchStreamProcessor, this method will be called before other methods
+     *
+     * @param attributeExpressionExecutors the executors of each function parameters
+     * @param executionPlanContext         the context of the execution plan
+     */
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] attributeExpressionExecutors,
                                    ExecutionPlanContext executionPlanContext) {
@@ -140,8 +162,16 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         return newAttributes;
     }
 
+    /**
+     * The main processing method that will be called upon event arrival
+     *
+     * @param streamEventChunk  the stream event chunk that need to be processed
+     * @param nextProcessor     the next processor to which the success events need to be passed
+     * @param streamEventCloner helps to clone the incoming event for local storage or modification
+     * @param complexEventPopulater helps to add attributes to the events before sending the chunk to the next processor
+     */
     @Override
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor processor,
+    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor,
                            StreamEventCloner streamEventCloner, ComplexEventPopulater complexEventPopulater) {
         ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
@@ -235,16 +265,33 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         }
     }
 
+    /**
+     * This will be called only once and this can be used to acquire
+     * required resources for the processing element.
+     * This will be called after initializing the system and before
+     * starting to process the events.
+     */
     @Override
     public void start() {
         // Do Nothing
     }
 
+    /**
+     * This will be called only once and this can be used to release
+     * the acquired resources for processing.
+     * This will be called before shutting down the system.
+     */
     @Override
     public void stop() {
         // Do Nothing
     }
 
+    /**
+     * Used to collect the serializable state of the processing element, that need to be
+     * persisted for the reconstructing the element to the same state on a different point of time
+     *
+     * @return stateful objects of the processing element as an array
+     */
     @Override
     public Object[] currentState() {
         synchronized (this) {
@@ -256,6 +303,13 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         }
     }
 
+    /**
+     * Used to restore serialized state of the processing element, for reconstructing
+     * the element to the same state as if was on a previous point of time.
+     *
+     * @param state the stateful objects of the element as an array on
+     *              the same order provided by currentState().
+     */
     @Override
     public void restoreState(Object[] state) {
         synchronized (this) {
@@ -272,16 +326,34 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         }
     }
 
+    /**
+     * The getScheduler method of the AbstractKTimeBatchStreamProcessor, As scheduler is private variable, to access publicly we
+     * use this getter method.
+     */
     @Override
     public Scheduler getScheduler() {
         return scheduler;
     }
 
+    /**
+     * The setScheduler method of the AbstractKTimeBatchStreamProcessor, As scheduler is private variable, to access publicly we
+     * use this setter method.
+     *
+     * @param scheduler the value of scheduler.
+     */
     @Override
     public void setScheduler(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
+    /**
+     * To find events from the processor event pool, that the matches the matchingEvent based on finder logic.
+     *
+     * @param matchingEvent the event to be matched with the events at the processor
+     * @param finder        the execution element responsible for finding the corresponding events that matches
+     *                      the matchingEvent based on pool of events at Processor
+     * @return the matched events
+     */
     @Override
     public StreamEvent find(StateEvent matchingEvent, Finder finder) {
         synchronized (this) {
@@ -289,6 +361,18 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension extends StreamP
         }
     }
 
+    /**
+     * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
+     * matchingEvent and the given matching expression logic.
+     *
+     * @param expression                  the matching expression
+     * @param matchingMetaStateHolder    the meta structure of the incoming matchingEvent
+     * @param executionPlanContext        current execution plan context
+     * @param variableExpressionExecutors the list of variable ExpressionExecutors already created
+     * @param eventTableMap               map of event tables
+     * @return finder having the capability of finding events at the processor against the expression and incoming
+     * matchingEvent
+     */
     @Override
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
                                   ExecutionPlanContext executionPlanContext,

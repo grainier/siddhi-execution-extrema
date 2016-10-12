@@ -37,6 +37,9 @@ public class TopKFinder<T> extends AbstractTopKBottomKFinder<T> {
         super(capacity);
     }
 
+    /**
+     * Get the topK items and their frequencies
+     */
     @Override
     public List<Counter<T>> get(int k) {
         List<Counter<T>> topK = new ArrayList<Counter<T>>(k);
@@ -52,6 +55,11 @@ public class TopKFinder<T> extends AbstractTopKBottomKFinder<T> {
         return topK;
     }
 
+    /**
+     * Get the bucket with the counter that should be replaced
+     * The least important counter will be considered
+     * The counter considered here is the counter with the lowest frequency
+     */
     @Override
     protected Bucket getBucketWithCounterToReplace() {
         return bucketList.first();
