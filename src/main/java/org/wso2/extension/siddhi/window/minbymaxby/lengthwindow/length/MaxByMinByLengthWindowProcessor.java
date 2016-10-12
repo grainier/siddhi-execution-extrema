@@ -43,11 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-//import org.wso2.siddhi.core.util.collection.operator.Finder;
-//import org.wso2.siddhi.core.util.parser.CollectionOperatorParser;
 
 /**
- * Abstract class which gives the min/max event in a Length window
+ * Abstract class which gives the event which holds minimum or maximum value corresponding to given attribute in a Length window.
  */
 public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor implements FindableProcessor {
     private ExpressionExecutor minByMaxByExecutorAttribute;
@@ -62,13 +60,17 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     private StreamEvent outputStreamEvent;
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
     StreamEvent toBeExpiredEvent = null;
-
-
+    
     public void setOutputStreamEvent(StreamEvent outputSreamEvent) {
         this.outputStreamEvent = outputSreamEvent;
     }
 
-
+    /**
+     * The init method of the WindowProcessor, this method will be called before other methods
+     *
+     * @param expressionExecutors the executors of each function parameters
+     * @param executionPlanContext         the context of the execution plan
+     */
     @Override
     protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
@@ -116,7 +118,13 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
     }
 
-
+    /**
+     * The main processing method that will be called upon event arrival
+     *
+     * @param complexEventChunk  the stream event chunk that need to be processed
+     * @param processor     the next processor to which the success events need to be passed
+     * @param streamEventCloner helps to clone the incoming event for local storage or modification
+     */
     @Override
     protected void process(ComplexEventChunk<StreamEvent> complexEventChunk, Processor processor, StreamEventCloner streamEventCloner) {
         List<ComplexEventChunk<StreamEvent>> streamEventChunks = new ArrayList<ComplexEventChunk<StreamEvent>>();
@@ -206,21 +214,45 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
     }
 
+    /**
+     * This will be called only once and this can be used to acquire
+     * required resources for the processing element.
+     * This will be called after initializing the system and before
+     * starting to process the events.
+     */
     @Override
     public void start() {
         //Do nothing
     }
 
+    /**
+     * This will be called only once and this can be used to release
+     * the acquired resources for processing.
+     * This will be called before shutting down the system.
+     */
     @Override
     public void stop() {
         //Do nothing
     }
 
+    /**
+     * Used to collect the serializable state of the processing element, that need to be
+     * persisted for the reconstructing the element to the same state on a different point of time
+     *
+     * @return stateful objects of the processing element as an array
+     */
     @Override
     public Object[] currentState() {
         return new Object[]{new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", toBeExpiredEvent), new AbstractMap.SimpleEntry<String, Object>("Count", count)};
     }
 
+    /**
+     * Used to restore serialized state of the processing element, for reconstructing
+     * the element to the same state as if was on a previous point of time.
+     *
+     * @param state the stateful objects of the element as an array on
+     *              the same order provided by currentState().
+     */
     @Override
     public void restoreState(Object[] state) {
         toBeExpiredEvent = null;
@@ -232,24 +264,44 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
 
     /**
-     * To find the parameter value of given parameter for each event .
+     * To find the attribute value of given attribute for each event .
      *
      * @param functionParameter name of the parameter of the event data
      * @param streamEvent       event  at processor
-     * @return the parameterValue
+     * @return the attributeValue
      */
 
     public Object getParameterValue(ExpressionExecutor functionParameter, StreamEvent streamEvent) {
-        Object parameterValue;
-        parameterValue = functionParameter.execute(streamEvent);
-        return parameterValue;
+        Object attributeValue;
+        attributeValue = functionParameter.execute(streamEvent);
+        return attributeValue;
     }
 
-
+    /**
+     * To find events from the processor event pool, that the matches the matchingEvent based on finder logic.
+     *
+     * @param matchingEvent the event to be matched with the events at the processor
+     * @param finder        the execution element responsible for finding the corresponding events that matches
+     *                      the matchingEvent based on pool of events at Processor
+     * @return the matched events
+     */
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
         return finder.find(matchingEvent, this.internalWindowChunk, this.streamEventCloner);
     }
 
+
+    /**
+     * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
+     * matchingEvent and the given matching expression logic.
+     *
+     * @param expression                  the matching expression
+     * @param matchingMetaStateHolder    the meta structure of the incoming matchingEvent
+     * @param executionPlanContext        current execution plan context
+     * @param variableExpressionExecutors the list of variable ExpressionExecutors already created
+     * @param eventTableMap               map of event tables
+     * @return finder having the capability of finding events at the processor against the expression and incoming
+     * matchingEvent
+     */
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
         return OperatorParser.constructOperator(this.internalWindowChunk, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
     }

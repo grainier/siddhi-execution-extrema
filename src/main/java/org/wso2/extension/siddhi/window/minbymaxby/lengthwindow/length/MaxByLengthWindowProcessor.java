@@ -19,14 +19,21 @@ package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.length;
 
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
-/**
- * Give the event which holds max value corresponding to a given attribute in a length Window
- */
+/*
+* Sample Query:
+*
+* from inputStream#window.minbymaxby:maxByLengthBatch(attribute1, 4)
+* select attribute1, attribute2
+* insert into outputStream;
+*
+* Description:
+* In the example query given, 4 is the number of events that need to should be in a sliding length window and attribute1 is the attribute
+* that need to be compared to find the event which has max value.
+* According to the given attribute it will give event which holds the maximum value.
+* */
 public class MaxByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
     public MaxByLengthWindowProcessor() {
         super.minByMaxByExecutorType = MaxByMinByConstants.MAX_BY;
         super.minByMaxByExtensionType = MaxByMinByConstants.MaxByLength;
     }
-
-
 }

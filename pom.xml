@@ -6,8 +6,7 @@
 
     <groupId>org.wso2.extension.siddhi</groupId>
     <artifactId>org.wso2.extesion.siddhi.window.minbymaxby</artifactId>
-    <version>1.0-SNAPSHOT</version>
-
+    <version>1.0.0-SNAPSHOT</version>
 
 
     <packaging>bundle</packaging>

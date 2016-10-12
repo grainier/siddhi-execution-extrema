@@ -25,7 +25,7 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import java.util.TreeMap;
 
 /**
- * clas which has the logic implementation to get the event which hold min/max value corresponding to given attribute
+ * class which has the logic implementation to get the event which hold min/max value corresponding to given attribute
  */
 public class MaxByMinByExecutor {
     private String minByMaxByExecutorType;
@@ -43,7 +43,6 @@ public class MaxByMinByExecutor {
     public String getMinByMaxByExecutorType() {
         return minByMaxByExecutorType;
     }
-
 
     public void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
         this.minByMaxByExecutorType = minByMaxByExecutorType;
@@ -65,7 +64,6 @@ public class MaxByMinByExecutor {
      * @param functionType MIN/MAX
      * @return outputEvent
      */
-
     public StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
         if (functionType.equals(MaxByMinByConstants.MIN_BY)) {
@@ -113,7 +111,6 @@ public class MaxByMinByExecutor {
      * @param maxByAttribute the attribute which the comparison is done.
      * @return maxEvent
      */
-
     public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
