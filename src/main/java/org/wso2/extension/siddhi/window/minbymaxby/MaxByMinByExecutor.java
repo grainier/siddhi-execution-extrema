@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -38,7 +37,6 @@ public class MaxByMinByExecutor {
     public void setSortedEventMap(TreeMap<Object, StreamEvent> sortedEventMap) {
         this.sortedEventMap = sortedEventMap;
     }
-
 
     public String getMinByMaxByExecutorType() {
         return minByMaxByExecutorType;
@@ -85,7 +83,8 @@ public class MaxByMinByExecutor {
      * @return minEvent
      */
 
-    public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor minByAttribute) {
+    public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
+            ExpressionExecutor minByAttribute) {
         StreamEvent minEvent = oldEvent;
         if (minEvent != null) {
             Object minEventValue = minByAttribute.execute(minEvent);
@@ -111,7 +110,8 @@ public class MaxByMinByExecutor {
      * @param maxByAttribute the attribute which the comparison is done.
      * @return maxEvent
      */
-    public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent, ExpressionExecutor maxByAttribute) {
+    public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
+            ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
             Object maxEventValue = maxByAttribute.execute(maxEvent);
@@ -128,6 +128,5 @@ public class MaxByMinByExecutor {
         }
         return maxEvent;
     }
-
 
 }

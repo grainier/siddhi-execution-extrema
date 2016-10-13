@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * Abstract class which gives the event which holds minimum or maximum value corresponding to given attribute in a Length window.
  */
@@ -71,8 +70,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param expressionExecutors  the executors of each function parameters
      * @param executionPlanContext the context of the execution plan
      */
-    @Override
-    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+    @Override protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
         this.executionPlanContext = executionPlanContext;
         this.internalWindowChunk = new ComplexEventChunk<StreamEvent>(false);
@@ -85,29 +83,28 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
         }
 
         if (attributeExpressionExecutors.length != 2) {
-            throw new ExecutionPlanValidationException("Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " window, " +
-                    "required 2, but found " + attributeExpressionExecutors.length);
+            throw new ExecutionPlanValidationException(
+                    "Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " window, "
+                            + "required 2, but found " + attributeExpressionExecutors.length);
         }
 
         Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
 
-
-        if (!((attributeType == Attribute.Type.DOUBLE)
-                || (attributeType == Attribute.Type.INT)
-                || (attributeType == Attribute.Type.STRING)
-                || (attributeType == Attribute.Type.FLOAT)
-                || (attributeType == Attribute.Type.LONG))) {
-            throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType + " window, " +
-                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
-                    " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING +
-                    ", but found " + attributeType.toString());
+        if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                == Attribute.Type.STRING) || (attributeType == Attribute.Type.FLOAT) || (attributeType
+                == Attribute.Type.LONG))) {
+            throw new ExecutionPlanValidationException(
+                    "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
+                            + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                            + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
+                            + ", but found " + attributeType.toString());
         }
         attributeType = attributeExpressionExecutors[1].getReturnType();
-        if (!((attributeType == Attribute.Type.LONG)
-                || (attributeType == Attribute.Type.INT))) {
-            throw new ExecutionPlanValidationException("Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType + " window, " +
-                    "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
-                    ", but found " + attributeType.toString());
+        if (!((attributeType == Attribute.Type.LONG) || (attributeType == Attribute.Type.INT))) {
+            throw new ExecutionPlanValidationException(
+                    "Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType
+                            + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG
+                            + ", but found " + attributeType.toString());
         }
 
         if (attributeExpressionExecutors.length == 2) {
@@ -125,14 +122,15 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param processor         the next processor to which the success events need to be passed
      * @param streamEventCloner helps to clone the incoming event for local storage or modification
      */
-    @Override
-    protected void process(ComplexEventChunk<StreamEvent> complexEventChunk, Processor processor, StreamEventCloner streamEventCloner) {
+    @Override protected void process(ComplexEventChunk<StreamEvent> complexEventChunk, Processor processor,
+            StreamEventCloner streamEventCloner) {
         List<ComplexEventChunk<StreamEvent>> streamEventChunks = new ArrayList<ComplexEventChunk<StreamEvent>>();
         synchronized (this) {
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
             while (complexEventChunk.hasNext()) {
                 StreamEvent streamEvent = complexEventChunk.next();
-                StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent); //this cloned event used to
+                StreamEvent clonedStreamEvent = streamEventCloner
+                        .copyStreamEvent(streamEvent); //this cloned event used to
                 // insert the event into treemap
 
                 if (count != 0) {
@@ -183,7 +181,8 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                         events.remove(0);
 
                         //get the output event
-                        setOutputStreamEvent(maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
+                        setOutputStreamEvent(
+                                maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
                         if (toBeExpiredEvent != null) {
                             if (outputStreamEvent != toBeExpiredEvent) {
                                 toBeExpiredEvent.setTimestamp(currentTime);
@@ -196,7 +195,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                         internalWindowChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
                         toBeExpiredEvent = outputStreamEvent;
 
-//                        System.out.println(outputStreamEventChunk);
+                        //                        System.out.println(outputStreamEventChunk);
                         if (outputStreamEventChunk.getFirst() != null) {
                             streamEventChunks.add(outputStreamEventChunk);
                         }
@@ -220,8 +219,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * This will be called after initializing the system and before
      * starting to process the events.
      */
-    @Override
-    public void start() {
+    @Override public void start() {
         //Do nothing
     }
 
@@ -230,8 +228,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * the acquired resources for processing.
      * This will be called before shutting down the system.
      */
-    @Override
-    public void stop() {
+    @Override public void stop() {
         //Do nothing
     }
 
@@ -241,9 +238,9 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      *
      * @return stateful objects of the processing element as an array
      */
-    @Override
-    public Object[] currentState() {
-        return new Object[]{new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", toBeExpiredEvent), new AbstractMap.SimpleEntry<String, Object>("Count", count)};
+    @Override public Object[] currentState() {
+        return new Object[] { new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", toBeExpiredEvent),
+                new AbstractMap.SimpleEntry<String, Object>("Count", count) };
     }
 
     /**
@@ -253,15 +250,13 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param state the stateful objects of the element as an array on
      *              the same order provided by currentState().
      */
-    @Override
-    public void restoreState(Object[] state) {
+    @Override public void restoreState(Object[] state) {
         toBeExpiredEvent = null;
         Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
         toBeExpiredEvent = (StreamEvent) stateEntry.getValue();
         Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
         count = (Integer) stateEntry2.getValue();
     }
-
 
     /**
      * To find the attribute value of given attribute for each event .
@@ -289,7 +284,6 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
         return finder.find(matchingEvent, this.internalWindowChunk, this.streamEventCloner);
     }
 
-
     /**
      * To construct a finder having the capability of finding events at the processor that corresponds to the incoming
      * matchingEvent and the given matching expression logic.
@@ -302,7 +296,11 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @return finder having the capability of finding events at the processor against the expression and incoming
      * matchingEvent
      */
-    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(this.internalWindowChunk, expression, matchingMetaStateHolder, executionPlanContext, variableExpressionExecutors, eventTableMap);
+    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
+            ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors,
+            Map<String, EventTable> eventTableMap) {
+        return OperatorParser
+                .constructOperator(this.internalWindowChunk, expression, matchingMetaStateHolder, executionPlanContext,
+                        variableExpressionExecutors, eventTableMap);
     }
 }

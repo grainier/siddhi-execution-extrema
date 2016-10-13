@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -16,7 +15,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 
 package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow.lengthbatch;
 
@@ -40,6 +38,5 @@ public class MaxByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindow
         super.minByMaxByExecutorType = MaxByMinByConstants.MAX_BY;
         super.minByMaxByExtensionType = MaxByMinByConstants.MaxByLengthBatch;
     }
-
 
 }

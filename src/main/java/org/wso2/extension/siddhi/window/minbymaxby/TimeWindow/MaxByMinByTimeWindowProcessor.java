@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -41,6 +41,7 @@ import org.wso2.siddhi.core.util.parser.OperatorParser;
 import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
+
 import java.util.*;
 
 /**
@@ -48,7 +49,8 @@ import java.util.*;
  * according to given attribute as events arrive and expire
  */
 
-public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor implements SchedulingProcessor, FindableProcessor {
+public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
+        implements SchedulingProcessor, FindableProcessor {
 
     protected String maxByMinByType;
     protected String windowType;
@@ -65,8 +67,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * The getScheduler method of the TimeWindowProcessor.
      * Since scheduler is a private variable, setter method is for public access.
      */
-    @Override
-    public Scheduler getScheduler() {
+    @Override public Scheduler getScheduler() {
         return scheduler;
     }
 
@@ -76,8 +77,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      *
      * @param scheduler the value of scheduler.
      */
-    @Override
-    public void setScheduler(Scheduler scheduler) {
+    @Override public void setScheduler(Scheduler scheduler) {
         this.scheduler = scheduler;
     }
 
@@ -87,45 +87,46 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * @param attributeExpressionExecutors the executors of each function parameters
      * @param executionPlanContext         the context of the execution plan
      */
-    @Override
-    protected void init(ExpressionExecutor[] attributeExpressionExecutors, ExecutionPlanContext executionPlanContext) {
+    @Override protected void init(ExpressionExecutor[] attributeExpressionExecutors,
+            ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
         this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         minByMaxByExecutor = new MaxByMinByExecutor();
         if (attributeExpressionExecutors.length == 2) {
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
             sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE)
-                    || (attributeType == Attribute.Type.INT)
-                    || (attributeType == Attribute.Type.FLOAT)
-                    || (attributeType == Attribute.Type.LONG)
-                    || (attributeType == Attribute.Type.STRING))) {
-                throw new ExecutionPlanValidationException("Invalid parameter type found for the first argument of " +
-                        windowType +
-                        " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG +
-                        " or " + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE +
-                        " or " + Attribute.Type.STRING +
-                        ", but found " + attributeType.toString());
+            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                    == Attribute.Type.STRING))) {
+                throw new ExecutionPlanValidationException(
+                        "Invalid parameter type found for the first argument of " + windowType + " required "
+                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
+                                + attributeType.toString());
             }
 
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
                 if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.INT) {
-                    timeInMilliSeconds = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
+                    timeInMilliSeconds = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1])
+                            .getValue();
 
                 } else if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.LONG) {
-                    timeInMilliSeconds = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
+                    timeInMilliSeconds = (Long) ((ConstantExpressionExecutor) attributeExpressionExecutors[1])
+                            .getValue();
                 } else {
-                    throw new ExecutionPlanValidationException("Time parameter should be either int or long, but found " +
-                            attributeExpressionExecutors[1].getReturnType());
+                    throw new ExecutionPlanValidationException(
+                            "Time parameter should be either int or long, but found " + attributeExpressionExecutors[1]
+                                    .getReturnType());
                 }
             } else {
-                throw new ExecutionPlanValidationException("Time parameter should have constant parameter attribute but found a dynamic attribute " +
-                        attributeExpressionExecutors[1].getClass().getCanonicalName());
+                throw new ExecutionPlanValidationException(
+                        "Time parameter should have constant parameter attribute but found a dynamic attribute "
+                                + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else {
-            throw new ExecutionPlanValidationException("Invalid no of arguments passed to " +
-                    windowType + ", " +
-                    "required 2, but found " + attributeExpressionExecutors.length + " input attributes");
+            throw new ExecutionPlanValidationException(
+                    "Invalid no of arguments passed to " + windowType + ", " + "required 2, but found "
+                            + attributeExpressionExecutors.length + " input attributes");
         }
     }
 
@@ -136,8 +137,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * @param nextProcessor     the next processor to which the success events need to be passed
      * @param streamEventCloner helps to clone the incoming event for local storage or modification
      */
-    @Override
-    protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor, StreamEventCloner streamEventCloner) {
+    @Override protected void process(ComplexEventChunk<StreamEvent> streamEventChunk, Processor nextProcessor,
+            StreamEventCloner streamEventCloner) {
         synchronized (this) {
             StreamEvent streamEvent = null;
             while (streamEventChunk.hasNext()) {
@@ -207,8 +208,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      *                      the matchingEvent based on pool of events at Processor
      * @return the matched events
      */
-    @Override
-    public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
+    @Override public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
         return finder.find(matchingEvent, expiredEventChunk, streamEventCloner);
     }
 
@@ -224,11 +224,12 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * @return finder having the capability of finding events at the processor against the expression and incoming
      * matchingEvent
      */
-    @Override
-    public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder, ExecutionPlanContext executionPlanContext,
-                                  List<VariableExpressionExecutor> variableExpressionExecutors, Map<String, EventTable> eventTableMap) {
-        return OperatorParser.constructOperator(expiredEventChunk, expression, matchingMetaStateHolder,
-                executionPlanContext, variableExpressionExecutors, eventTableMap);
+    @Override public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
+            ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors,
+            Map<String, EventTable> eventTableMap) {
+        return OperatorParser
+                .constructOperator(expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext,
+                        variableExpressionExecutors, eventTableMap);
     }
 
     /**
@@ -237,8 +238,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * This will be called after initializing the system and before
      * starting to process the events.
      */
-    @Override
-    public void start() {
+    @Override public void start() {
         //Do nothing
     }
 
@@ -247,8 +247,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * the acquired resources for processing.
      * This will be called before shutting down the system.
      */
-    @Override
-    public void stop() {
+    @Override public void stop() {
         //Do nothing
     }
 
@@ -258,9 +257,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      *
      * @return stateful objects of the processing element as an array
      */
-    @Override
-    public Object[] currentState() {
-        return new Object[]{minByMaxByExecutor.getSortedEventMap()};
+    @Override public Object[] currentState() {
+        return new Object[] { minByMaxByExecutor.getSortedEventMap() };
     }
 
     /**
@@ -270,8 +268,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor impl
      * @param state the stateful objects of the element as an array on
      *              the same order provided by currentState().
      */
-    @Override
-    public void restoreState(Object[] state) {
+    @Override public void restoreState(Object[] state) {
         minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
     }
 }
