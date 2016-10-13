@@ -56,7 +56,7 @@ public class MinByTimeBatchWindowTestCase {
                 "@info(name = 'query1') " +
                 "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) " +
                 "select symbol, price " +
-                "insert into outputStream ;";
+                "insert  into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 
@@ -75,20 +75,21 @@ public class MinByTimeBatchWindowTestCase {
             }
 
         });
-
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
         inputHandler.send(new Object[]{"IBM", 700f, 1});
         inputHandler.send(new Object[]{"WSO2", 888f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 1});
-        Thread.sleep(5000);
+        Thread.sleep(1100);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
         inputHandler.send(new Object[]{"IBM", 777f, 3});
         inputHandler.send(new Object[]{"WSO2", 234.5f, 4});
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"IBM", 90f, 5});
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
-        Thread.sleep(2000);
+        Thread.sleep(1100);
+        System.out.println();
+        Thread.sleep(1100);
         Assert.assertEquals(3, inEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
@@ -269,7 +270,7 @@ public class MinByTimeBatchWindowTestCase {
             twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
             cseEventStreamHandler.send(new Object[]{"WSO2", 75.6f, 100});
             twitterStreamHandler.send(new Object[]{"User1", "Hello ", "WSO2"});
-            cseEventStreamHandler.send(new Object[]{"IBM", 7.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 7.6f, 100});
             Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
             Assert.assertEquals(0, removeEventCount);

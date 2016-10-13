@@ -53,7 +53,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec,0) " +
+                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert into outputStream ;";
 
@@ -67,7 +67,6 @@ public class MaxByTimeBatchWindowTestCase {
                     inEventCount = inEventCount + inEvents.length;
                 }
                 if (removeEvents != null) {
-                    Assert.assertTrue("InEvents arrived before RemoveEvents", inEventCount > removeEventCount);
                     removeEventCount = removeEventCount + removeEvents.length;
                 }
                 eventArrived = true;
@@ -89,8 +88,6 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();;
-
-        Thread.sleep(2000);
         Assert.assertEquals(3, inEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
@@ -110,18 +107,22 @@ public class MaxByTimeBatchWindowTestCase {
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 
-        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-            @Override
-            public void receive(Event[] events) {
-                EventPrinter.print(events);
-            }
-        });
+        executionPlanRuntime.addCallback("query2", new QueryCallback() {
+                    @Override
+                    public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                        EventPrinter.print(timeStamp , inEvents , removeEvents);
+                    }
+                });
 
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
         inputHandler.send(new Object[]{"IBM", 700f, 1});
         inputHandler.send(new Object[]{"WSO2", 888f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 1});
+        Thread.sleep(1100);
+        System.out.println();
+        Thread.sleep(1100);
+        System.out.println();
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
         inputHandler.send(new Object[]{"IBM", 777f, 3});

@@ -22,7 +22,15 @@ package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
 import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
 
 /**
- * Output the min event corresponding to a given attribute in a Time Window
+ * Sample Query:
+ * from inputStream#window.minbymaxby:minbytime(attribute1,1 sec)
+ * select attribute1, attribute2
+ * insert into outputStream;
+ * <p>
+ * Description:
+ * In the sample query given, 1 sec is the duration of the sliding window and attribute1 is the maxBy attribute.
+ * According to the given attribute it will give the minimum event during last windowTime period
+ * and gets updated on every event arrival and expiry.
  */
 public class MinByTimeWindowProcessor extends MaxByMinByTimeWindowProcessor {
     public MinByTimeWindowProcessor() {
