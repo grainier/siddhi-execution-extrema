@@ -91,7 +91,7 @@ public class DoublyLinkedList<T> implements Iterable<T> {
     /**
      * Add a node with value after the node specified
      *
-     * @param node The node after which the new node should be added
+     * @param node  The node after which the new node should be added
      * @param value The value of the node to be added
      * @return
      */
@@ -104,7 +104,7 @@ public class DoublyLinkedList<T> implements Iterable<T> {
     /**
      * Add a node  after the node specified
      *
-     * @param node The node after which the new node should be added
+     * @param node    The node after which the new node should be added
      * @param newNode The node to be added
      * @return
      */
@@ -213,9 +213,9 @@ public class DoublyLinkedList<T> implements Iterable<T> {
         private int length;
 
         public DoublyLinkedListIterator(DoublyLinkedList<T> list) {
-            this.length = list.size;
+            length = list.size;
             this.list = list;
-            this.nextItrNode = list.head;
+            nextItrNode = list.head;
         }
 
         /**

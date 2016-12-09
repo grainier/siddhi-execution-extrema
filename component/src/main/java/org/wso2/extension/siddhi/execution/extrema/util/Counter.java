@@ -27,9 +27,9 @@ public class Counter<T> {
     private long error;
 
     public Counter(ListNode<AbstractTopKBottomKFinder<T>.Bucket> bucket, T item) {
-        this.bucketNode = bucket;
-        this.count = 0;
-        this.error = 0;
+        bucketNode = bucket;
+        count = 0;
+        error = 0;
         this.item = item;
     }
 

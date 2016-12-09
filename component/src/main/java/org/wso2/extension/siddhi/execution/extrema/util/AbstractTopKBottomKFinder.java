@@ -63,8 +63,9 @@ public abstract class AbstractTopKBottomKFinder<T> {
             // New counter needs to be added
             if (counterMap.size() < capacity) {
                 // New bucket needs to be created
-                counterNode = bucketList.addBeforeFirst(new Bucket(0)).getValue()
-                        .getCounterList().addAfterLast(new Counter<T>(bucketList.head(), item));
+                counterNode = bucketList.addBeforeFirst(new Bucket(0))
+                        .getValue().getCounterList()
+                        .addAfterLast(new Counter<T>(bucketList.head(), item));
             } else {
                 // Least important counter needs to be removed (Importance depends on whether it is topK or bottomK)
                 // Then new bucket needs to be added
@@ -77,7 +78,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
             }
             counterMap.put(item, counterNode);
         }
-        incrementCounterForNode(counterNode, incrementCount);
+        incrementCounter(counterNode, incrementCount);
     }
 
     /**
@@ -86,7 +87,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
      * @param counterNode    The counter node to increase the frequency of
      * @param incrementCount The increment size
      */
-    private void incrementCounterForNode(ListNode<Counter<T>> counterNode, int incrementCount) {
+    private void incrementCounter(ListNode<Counter<T>> counterNode, int incrementCount) {
         // Increase the counter count
         Counter<T> counter = counterNode.getValue();
         counter.increaseCount(incrementCount);
@@ -103,17 +104,25 @@ public abstract class AbstractTopKBottomKFinder<T> {
             // Finding the right bucket for the counter
             // This may or may not be an adjacent bucket because incrementCount can be aby value
             ListNode<Bucket> currentNode = oldBucketNode;
-            ListNode<Bucket> nextBucketNode = oldBucketNode.getNextNode();
+            ListNode<Bucket> nextBucketNode;
+            if (incrementCount > 0) {
+                nextBucketNode = oldBucketNode.getNextNode();
+            } else {
+                nextBucketNode = oldBucketNode.getPreviousNode();
+            }
             while (nextBucketNode != null) {
                 Bucket nextBucket = nextBucketNode.getValue();
                 if (counter.getCount() == nextBucket.getCount()) {
                     nextBucket.getCounterList().addAfterLast(counterNode);
                     break;
-                } else if (counter.getCount() > nextBucket.getCount()) {
+                } else if (incrementCount > 0 && counter.getCount() > nextBucket.getCount()) {
                     currentNode = nextBucketNode;
                     nextBucketNode = nextBucketNode.getNextNode();
+                } else if (incrementCount < 0 && counter.getCount() < nextBucket.getCount()) {
+                    currentNode = nextBucketNode;
+                    nextBucketNode = nextBucketNode.getPreviousNode();
                 } else {
-                    // A new bucket has to be created
+                    // New bucket node needs to be created
                     nextBucketNode = null;
                 }
             }
@@ -133,7 +142,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
     }
 
     /**
-     * Get results from the cirrent data structure
+     * Get results from the current data structure
      * Results depends on whether topK or bottomK is required
      *
      * @param k The number of elements to fetch
