@@ -17,7 +17,7 @@
  *
  */
 
-package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
+package org.wso2.extension.siddhi.execution.extrema;
 
 import junit.framework.Assert;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert into outputStream ;";
 
@@ -101,7 +101,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query2') " +
-                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert all events into outputStream ;";
 
@@ -143,7 +143,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query2') " +
-                "from cseEventStream#window.minbymaxby:maxbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert all events into outputStream ;";
 

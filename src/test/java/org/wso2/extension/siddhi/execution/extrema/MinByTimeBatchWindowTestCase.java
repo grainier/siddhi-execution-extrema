@@ -17,7 +17,7 @@
  *
  */
 
-package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
+package org.wso2.extension.siddhi.execution.extrema;
 
 import junit.framework.Assert;
 import org.apache.log4j.Logger;
@@ -54,7 +54,7 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:minbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert  into outputStream ;";
 
@@ -103,7 +103,7 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query2') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:minbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert expired events into outputStream ;";
 
@@ -148,7 +148,7 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
                 "@info(name = 'query2') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) " +
+                "from cseEventStream#window.extrema:minbytimebatch(price,1 sec) " +
                 "select symbol, price " +
                 "insert all events into outputStream ;";
 
@@ -185,7 +185,7 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream twitterStream (user string, tweet string, company string); ";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.timeBatch(1 sec) " +
+                "from cseEventStream#window.extrema:minbytimebatch(price,1 sec) join twitterStream#window.timeBatch(1 sec) " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert into outputStream ;";
@@ -231,7 +231,7 @@ public class MinByTimeBatchWindowTestCase {
                 "define stream twitterStream (user string, tweet string, company string); ";
         String query = "" +
                 "@info(name = 'query1') " +
-                "from cseEventStream#window.minbymaxby:minbytimebatch(price,1 sec) join twitterStream#window.minbymaxby:maxbytimebatch(company,1 sec)  " +
+                "from cseEventStream#window.extrema:minbytimebatch(price,1 sec) join twitterStream#window.extrema:maxbytimebatch(company,1 sec)  " +
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert into outputStream ;";

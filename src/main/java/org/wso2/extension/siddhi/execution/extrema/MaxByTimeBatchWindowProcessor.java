@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -17,24 +17,24 @@
  *
  */
 
-package org.wso2.extension.siddhi.window.minbymaxby.TimeWindow;
+package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.window.minbymaxby.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
 
 /**
  * Sample Query:
- * from inputStream#window.minbymaxby:maxbytime(attribute1,1 sec)
+ * from inputStream#window.minbymaxby:maxbytimebatch(attribute1,1 sec)
  * select attribute1, attribute2
  * insert into outputStream;
  * <p>
  * Description:
- * In the sample query given, 1 sec is the duration of the sliding window and attribute1 is the maxBy attribute.
- * According to the given attribute it will give the maximum event during last windowTime period
- * and gets updated on every event arrival and expiry.
+ * In the sample query given, 1 sec is the duration of the window and attribute1 is the maxBy attribute.
+ * According to the given attribute it will give the maximum event within given time.
  */
-public class MaxByTimeWindowProcessor extends MaxByMinByTimeWindowProcessor {
-    public MaxByTimeWindowProcessor() {
+
+public class MaxByTimeBatchWindowProcessor extends MaxByMinByTimeBatchWindowProcessor {
+    public MaxByTimeBatchWindowProcessor() {
         maxByMinByType = MaxByMinByConstants.MAX_BY;
-        windowType = MaxByMinByConstants.MaxByTime;
+        windowType = MaxByMinByConstants.MaxByTimeBatch;
     }
 }

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,8 +15,10 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
  */
-package org.wso2.extension.siddhi.window.minbymaxby.lengthwindow;
+
+package org.wso2.extension.siddhi.execution.extrema;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -55,7 +57,7 @@ public class MinByLengthWindowProcessorTestCase {
 
 
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLength(price, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.extrema:minByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         results.add(new Object[]{"IBM", 700f, 14});
@@ -92,7 +94,7 @@ public class MinByLengthWindowProcessorTestCase {
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLength(volume, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.extrema:minByLength(volume, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         try {
@@ -133,7 +135,7 @@ public class MinByLengthWindowProcessorTestCase {
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.minbymaxby:minByLength(symbol, 4) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.extrema:minByLength(symbol, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         try {
