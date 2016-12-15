@@ -66,6 +66,7 @@ public class MaxByMinByExecutor {
     public StreamEvent getResult(String functionType) {
         StreamEvent outputEvent;
         if (functionType.equals(MaxByMinByConstants.MIN_BY)) {
+            //// TODO: 15/12/16 make it one line
             Object minEventKey = sortedEventMap.firstKey();
             outputEvent = sortedEventMap.get(minEventKey);
         } else {
@@ -91,6 +92,7 @@ public class MaxByMinByExecutor {
             Object minEventValue = minByAttribute.execute(minEvent);
             Object currentEventValue = minByAttribute.execute(currentEvent);
             if (minEventValue instanceof Comparable && currentEventValue instanceof Comparable) {
+                // TODO: 15/12/16  no need to cast to comparable
                 Comparable minValue = (Comparable) minEventValue;
                 Comparable currentValue = (Comparable) currentEventValue;
                 if (currentValue.compareTo(minValue) <= 0) {

@@ -95,7 +95,7 @@ public class MaxByLengthWindowProcessorTestCase {
 
 
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
-        String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxByLength(price, 2) select symbol,price," +
+        String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 //        results.add(new Object[]{"IBM", 700f, 14});
@@ -117,10 +117,11 @@ public class MaxByLengthWindowProcessorTestCase {
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
-            inputHandler.send(new Object[]{"IBM", 10f, 14});
+            inputHandler.send(new Object[]{"IBM", 88f, 14});
             inputHandler.send(new Object[]{"IBM", 20.5f, 2});
             inputHandler.send(new Object[]{"WSO2", 20.5f, 1});
             inputHandler.send(new Object[]{"WSO2", 23f, 1});
+            inputHandler.send(new Object[]{"WSO2", 100f, 1});
 
             Thread.sleep(1000);
         } finally {
@@ -157,7 +158,7 @@ public class MaxByLengthWindowProcessorTestCase {
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
-            inputHandler.send(new Object[]{"IBM", 700f, 14});
+            inputHandler.send(new Object[]{"IBM", 700f, 99});
             inputHandler.send(new Object[]{"IBM", 60.5f, 12});
             inputHandler.send(new Object[]{"IBM", 700f, 20});
             inputHandler.send(new Object[]{"ZZZ", 60.5f, 82});
@@ -351,7 +352,7 @@ public class MaxByLengthWindowProcessorTestCase {
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
             Thread.sleep(100);
-            System.out.println(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,");
+
 
             cseEventStreamHandler.send(new Object[]{"WSO2", 900f, 14});
             System.out.println("------------------------------------");

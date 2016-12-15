@@ -58,6 +58,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /*
      * minByMaxByExecutorType holds the value to indicate MIN or MAX
      */
+    // TODO: 15/12/16 change the acces modifier 
     protected String minByMaxByExecutorType;
 
     /*
@@ -71,10 +72,12 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     private ExpressionExecutor minByMaxByExecutorAttribute;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
+    // TODO: 15/12/16 change the accesss modifier 
     private VariableExpressionExecutor[] variableExpressionExecutors;
     /*
     minByMaxByExecutor used to get extrema event
      */
+    // TODO: 15/12/16 change the access modifier 
     private MaxByMinByExecutor minByMaxByExecutor;
     /*
      *Represents previous extrema event
@@ -87,6 +90,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     private StreamEvent expiredResultEvent;
     private StreamEvent resetEvent;
 
+    // TODO: 15/12/16 remove 
     public MaxByMinByLengthBatchWindowProcessor() {
 
     }
@@ -102,11 +106,9 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
 
         this.executionPlanContext = executionPlanContext;
         minByMaxByExecutor = new MaxByMinByExecutor();
-        if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
+       
             minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        } else {
-            minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        }
+       
 
         if (attributeExpressionExecutors.length != 2) {
             throw new ExecutionPlanValidationException(
@@ -115,6 +117,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
         }
 
         Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+        // TODO: 15/12/16 check for string only and check instance of variable expressionexecutor
         if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
                 == Attribute.Type.STRING) || (attributeType == Attribute.Type.FLOAT) || (attributeType
                 == Attribute.Type.LONG))) {
@@ -124,6 +127,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                             + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
                             + ", but found " + attributeType.toString());
         }
+        // TODO: 15/12/16 instance of constance expression executor and type 
         attributeType = attributeExpressionExecutors[1].getReturnType();
         if (!((attributeType == Attribute.Type.LONG) || (attributeType == Attribute.Type.INT))) {
             throw new ExecutionPlanValidationException(
@@ -131,13 +135,14 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                             + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG
                             + ", but found " + attributeType.toString());
         }
-
+// TODO: 15/12/16 remove array 
         variableExpressionExecutors = new VariableExpressionExecutor[attributeExpressionExecutors.length - 1];
-        if (attributeExpressionExecutors.length == 2) {
+         
             variableExpressionExecutors[0] = (VariableExpressionExecutor) attributeExpressionExecutors[0];
-            minByMaxByExecutorAttribute = variableExpressionExecutors[0];
+        // TODO: 15/12/16 minbymaxbyattributeexpressionexecutor 
+        minByMaxByExecutorAttribute = variableExpressionExecutors[0];
             length = (Integer) (((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue());
-        }
+        
 
     }
 
@@ -179,7 +184,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                 count++;
                 if (count == length) {
 
-                    if (resultEvent != null) {
+                    
                         if (expiredResultEvent != null) {
                             expiredEventChunk.clear();
                             outputStreamEventChunk.add(expiredResultEvent);
@@ -189,11 +194,12 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                         expiredResultEvent = streamEventCloner.copyStreamEvent(resultEvent);
                         expiredResultEvent.setTimestamp(currentTime);
                         expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
+                    // TODO: 15/12/16 create the chunk within find method 
                         expiredEventChunk.add(expiredResultEvent);
                         resetEvent = streamEventCloner.copyStreamEvent(resultEvent);
                         resetEvent.setType(StateEvent.Type.RESET);
-                        System.out.println(outputStreamEventChunk);
-                    }
+                        // System.out.println(outputStreamEventChunk);
+                    
                     count = 0;
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
@@ -236,9 +242,11 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
      */
     @Override
     public Object[] currentState() {
+        // TODO: 15/12/16 remove checking null 
         return this.expiredEventChunk != null ?
                 new Object[]{this.resultEvent, this.expiredEventChunk.getFirst(), Integer.valueOf(this.count),
                         this.resetEvent} :
+                // TODO: 15/12/16 use resultvent for reset and change the type 
                 new Object[]{this.resultEvent, Integer.valueOf(this.count), this.resetEvent};
     }
 
@@ -251,6 +259,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
      */
     @Override
     public void restoreState(Object[] state) {
+        // TODO: 15/12/16 fix this 
         if (state.length > 3) {
             this.resultEvent = null;
             Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
