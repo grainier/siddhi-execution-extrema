@@ -49,9 +49,21 @@ import java.util.Map;
  * Abstract class which gives the event which holds minimum or maximum value corresponding to given attribute in a Length window.
  */
 public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor implements FindableProcessor {
+    /*
+      Attribute which is used to find Extrema event
+   */
     private ExpressionExecutor minByMaxByExecutorAttribute;
+    /*
+     * minByMaxByExecutorType holds the value to indicate MIN or MAX
+     */
     protected String minByMaxByExecutorType;
+    /*
+   minByMaxByExtensionType holds the extension type (MaxByLength/MinByLength)
+    */
     protected String minByMaxByExtensionType;
+    /*
+    minByMaxByExecutor used to get extrema event
+     */
     private MaxByMinByExecutor maxByMinByExecutor;
     private int length;
     private int count = 0;
@@ -59,8 +71,11 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     private ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
     private ExecutionPlanContext executionPlanContext;
     private StreamEvent outputStreamEvent;
+    /*
+    to holds the list of events that should be in a sliding length window.
+     */
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
-    StreamEvent toBeExpiredEvent = null;
+    private StreamEvent toBeExpiredEvent = null;
 
     public void setOutputStreamEvent(StreamEvent outputSreamEvent) {
         this.outputStreamEvent = outputSreamEvent;

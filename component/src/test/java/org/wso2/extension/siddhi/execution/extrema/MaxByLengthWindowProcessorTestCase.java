@@ -37,7 +37,7 @@ import java.util.List;
 import static org.junit.Assert.assertArrayEquals;
 
 /**
- * Created by mathuriga on 01/10/16.
+ * Test cases for MaxByLengthWindowProcessorTestCase
  */
 public class MaxByLengthWindowProcessorTestCase {
     private static final Logger log = Logger.getLogger(MaxByLengthWindowProcessorTestCase.class);
