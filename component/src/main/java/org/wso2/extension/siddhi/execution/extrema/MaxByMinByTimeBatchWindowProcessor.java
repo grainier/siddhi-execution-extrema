@@ -76,6 +76,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
         if (attributeExpressionExecutors.length == 2) {
+            //TODO: check for an instance variableExpressionExecutor
             Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
             sortByAttribute = attributeExpressionExecutors[0];
             if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType

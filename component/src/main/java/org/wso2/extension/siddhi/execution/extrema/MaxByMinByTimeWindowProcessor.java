@@ -189,6 +189,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
                 } else {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
                 }
+                // TODO: 12/15/16  use .equals() to compare two objects  
                 if (tempEvent != currentEvent) {
                     StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);
                     expiredEventChunk.add(event);
