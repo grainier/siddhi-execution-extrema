@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -58,13 +58,12 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /*
      * minByMaxByExecutorType holds the value to indicate MIN or MAX
      */
-    // TODO: 15/12/16 change the acces modifier 
-    protected String minByMaxByExecutorType;
+    String minByMaxByExecutorType;
 
     /*
     minByMaxByExtensionType holds the extension type (MaxByLengthBatch/MinByLengthBatch)
      */
-    protected String minByMaxByExtensionType;
+    //String minByMaxByExtensionType;
 
     /*
     Attribute which is used to find Extrema event
@@ -72,13 +71,11 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     private ExpressionExecutor minByMaxByExecutorAttribute;
     private ComplexEventChunk<StreamEvent> expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
     private ExecutionPlanContext executionPlanContext;
-    // TODO: 15/12/16 change the accesss modifier 
-    private VariableExpressionExecutor[] variableExpressionExecutors;
+    protected VariableExpressionExecutor[] variableExpressionExecutors;
     /*
     minByMaxByExecutor used to get extrema event
      */
-    // TODO: 15/12/16 change the access modifier 
-    private MaxByMinByExecutor minByMaxByExecutor;
+    protected MaxByMinByExecutor minByMaxByExecutor;
     /*
      *Represents previous extrema event
      */
@@ -89,11 +86,6 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     private StreamEvent resultEvent;
     private StreamEvent expiredResultEvent;
     private StreamEvent resetEvent;
-
-    // TODO: 15/12/16 remove 
-    public MaxByMinByLengthBatchWindowProcessor() {
-
-    }
 
     /**
      * The init method of the WindowProcessor, this method will be called before other methods
@@ -117,15 +109,11 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
         }
 
         Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-        // TODO: 15/12/16 check for string only and check instance of variable expressionexecutor
-        if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                == Attribute.Type.STRING) || (attributeType == Attribute.Type.FLOAT) || (attributeType
-                == Attribute.Type.LONG))) {
+        if (!(attributeType == Attribute.Type.STRING) && (attributeExpressionExecutors[0] instanceof VariableExpressionExecutor)) {
             throw new ExecutionPlanValidationException(
                     "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
-                            + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
-                            + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
-                            + ", but found " + attributeType.toString());
+                            + " window, " + "required " + Attribute.Type.STRING
+                            + ", but found " + attributeType.toString() );
         }
         // TODO: 15/12/16 instance of constance expression executor and type 
         attributeType = attributeExpressionExecutors[1].getReturnType();
