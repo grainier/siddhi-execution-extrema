@@ -1,25 +1,24 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
+ *   Unless required by applicable law or agreed to in writing,
+ *   software distributed under the License is distributed on an
+ *   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *   KIND, either express or implied. See the License for the
+ *   specific language governing permissions and limitations
+ *   under the License.
  */
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
@@ -53,8 +52,7 @@ import java.util.Map;
 
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
-    protected String maxByMinByType;
-    protected String windowType;
+    protected Constants.Type maxByMinByType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
     private StreamEvent resetEvent = null;
@@ -76,16 +74,23 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
         if (attributeExpressionExecutors.length == 2) {
-            Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                    == Attribute.Type.STRING))) {
+            if( attributeExpressionExecutors[0] instanceof  VariableExpressionExecutor){
+                Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+                sortByAttribute = attributeExpressionExecutors[0];
+                if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                        == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                        == Attribute.Type.STRING))) {
+                    throw new ExecutionPlanValidationException(
+                            "Invalid parameter type found for the first argument of " + maxByMinByType + " time batch window "
+                                    + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                                    + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
+                                    + attributeType.toString());
+                }
+            }
+            else {
                 throw new ExecutionPlanValidationException(
-                        "Invalid parameter type found for the first argument of " + windowType + " " + "required "
-                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                + attributeType.toString());
+                        "First parameter should be a dynamic attribute but found"
+                                + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
                 if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.INT) {
@@ -106,17 +111,25 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                                 + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else if (attributeExpressionExecutors.length == 3) {
-            Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                    == Attribute.Type.STRING))) {
-                throw new ExecutionPlanValidationException(
-                        "Invalid parameter type found for the first argument of " + windowType + " required "
-                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                + attributeType.toString());
+            if( attributeExpressionExecutors[0] instanceof VariableExpressionExecutor){
+                Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+                sortByAttribute = attributeExpressionExecutors[0];
+                if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                        == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                        == Attribute.Type.STRING))) {
+                    throw new ExecutionPlanValidationException(
+                            "Invalid parameter type found for the first argument of " + maxByMinByType + " time batch window"
+                                    + " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                                    + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING
+                                    + ", but found " + attributeType.toString());
+                }
             }
+            else {
+                throw new ExecutionPlanValidationException(
+                        "First parameter should be a dynamic attribute but found"
+                                + attributeExpressionExecutors[1].getClass().getCanonicalName());
+            }
+
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
                 if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.INT) {
                     timeInMilliSeconds = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1])
@@ -146,7 +159,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             }
         } else {
             throw new ExecutionPlanValidationException(
-                    windowType + " should only have two or three parameters. but found "
+                    maxByMinByType + " time batch window should only have two or three parameters. but found "
                             + attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -187,10 +200,10 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
+                if (maxByMinByType.equals(Constants.MIN_BY)) {
                     currentEvent = MaxByMinByExecutor
                             .getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
-                } else if (maxByMinByType.equals(MaxByMinByConstants.MAX_BY)) {
+                } else if (maxByMinByType.equals(Constants.MAX_BY)) {
                     currentEvent = MaxByMinByExecutor
                             .getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }
