@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -14,14 +14,17 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
-
 package org.wso2.extension.siddhi.execution.extrema.util;
 
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Implements the logic related to incrementing the frequencies for the items
+ *
+ * @param <T> The type of item to store
+ */
 public abstract class AbstractTopKBottomKFinder<T> {
     protected DoublyLinkedList<Bucket> bucketList;
     private int capacity;
@@ -61,21 +64,19 @@ public abstract class AbstractTopKBottomKFinder<T> {
         ListNode<Counter<T>> counterNode = counterMap.get(item);
         if (counterNode == null) {
             // New counter needs to be added
-            if (counterMap.size() < capacity) {
-                // New bucket needs to be created
-                counterNode = bucketList.addBeforeFirst(new Bucket(0))
-                        .getValue().getCounterList()
-                        .addAfterLast(new Counter<T>(bucketList.head(), item));
-            } else {
+            if (counterMap.size() >= capacity) {
                 // Least important counter needs to be removed (Importance depends on whether it is topK or bottomK)
                 // Then new bucket needs to be added
-                Bucket bucketWithCounterToReplace = getBucketWithCounterToReplace();
-                counterNode = bucketWithCounterToReplace.getCounterList().tail();
-                Counter<T> counter = counterNode.getValue();
-                counterMap.remove(counter.getItem());
-                counter.setItem(item);
-                counter.setError(bucketWithCounterToReplace.getCount());
+                DoublyLinkedList<Counter<T>> counterList =
+                        getBucketWithCounterToReplace().getCounterList();
+
+                // Removing the least important counter from the bucket and the counter map
+                counterList.remove(counterList.head());
+                counterMap.remove(item);
             }
+            counterNode = bucketList.addBeforeFirst(new Bucket(0))
+                    .getValue().getCounterList()
+                    .addAfterLast(new Counter<T>(bucketList.head(), item));
             counterMap.put(item, counterNode);
         }
         incrementCounter(counterNode, incrementCount);
@@ -97,7 +98,7 @@ public abstract class AbstractTopKBottomKFinder<T> {
         Bucket oldBucket = oldBucketNode.getValue();
         oldBucket.getCounterList().remove(counterNode);
 
-        if (counter.getCount() == 0) {
+        if (counter.getCount() <= 0) {
             // Removing counter if count is 0
             counterMap.remove(counter.getItem());
         } else {
@@ -162,14 +163,14 @@ public abstract class AbstractTopKBottomKFinder<T> {
      * <p>
      * Keeps a list of counter with the same of number of frequencies
      */
-    public class Bucket {
+    class Bucket {
         private long count;
         private DoublyLinkedList<Counter<T>> counterList;
 
         /**
          * @param count The frequency of the items in the bucket
          */
-        public Bucket(long count) {
+        Bucket(long count) {
             this.count = count;
             counterList = new DoublyLinkedList<Counter<T>>();
         }

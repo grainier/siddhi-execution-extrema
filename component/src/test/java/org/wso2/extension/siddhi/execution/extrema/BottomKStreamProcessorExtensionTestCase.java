@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.extension.siddhi.execution.extrema;
 
 import junit.framework.Assert;
@@ -29,6 +28,8 @@ import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
+
+import java.util.Arrays;
 
 public class BottomKStreamProcessorExtensionTestCase {
     private static final Logger log = Logger.getLogger(BottomKStreamProcessorExtensionTestCase.class);
@@ -59,12 +60,10 @@ public class BottomKStreamProcessorExtensionTestCase {
                 if (count == 0) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
-                        Assert.assertEquals("item3", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item2", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item1", event.getData(6));
-                        Assert.assertEquals(3L, event.getData(7));
+                        Assert.assertEquals(
+                                Arrays.asList("item3", 64L, "item3", 1L, "item2", 2L, "item1", 3L),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNull(removeEvents);
@@ -74,12 +73,10 @@ public class BottomKStreamProcessorExtensionTestCase {
                 } else if (count == 2) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(2L, event.getData(3));
-                        Assert.assertEquals("item5", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
-                        Assert.assertEquals("item6", event.getData(6));
-                        Assert.assertEquals(2L, event.getData(7));
+                        Assert.assertEquals(
+                                Arrays.asList("item6", 23L, "item6", 2L, "item5", 2L, "item4", 2L),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNull(removeEvents);
@@ -136,37 +133,35 @@ public class BottomKStreamProcessorExtensionTestCase {
                 if (count == 2) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
-                        Assert.assertEquals("item2", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item1", event.getData(4));
-                        Assert.assertEquals(2L, event.getData(5));
+                        Assert.assertEquals(
+                                Arrays.asList("item1", 10L, "item2", 1L, "item1", 2L, null, null),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {
-                        Assert.assertEquals("item1", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item2", event.getData(4));
-                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertEquals(
+                                Arrays.asList("item2", 65L, "item2", 1L, "item1", 1L, null, null),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertTrue(event.isExpired());
                     }
                 } else if (count == 8) {
                     Assert.assertNotNull(inEvents);
                     for (Event event : inEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item5", event.getData(4));
-                        Assert.assertEquals(1L, event.getData(5));
-                        Assert.assertEquals("item6", event.getData(6));
-                        Assert.assertEquals(1L, event.getData(7));
+                        Assert.assertEquals(
+                                Arrays.asList("item6", 34L, "item6", 1L, "item5", 1L, "item4", 1L),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertFalse(event.isExpired());
                     }
                     Assert.assertNotNull(removeEvents);
                     for (Event event : removeEvents) {
-                        Assert.assertEquals("item4", event.getData(2));
-                        Assert.assertEquals(1L, event.getData(3));
-                        Assert.assertEquals("item5", event.getData(4));
-                        Assert.assertEquals(1L, event.getData(5));
+                        Assert.assertEquals(
+                                Arrays.asList("item5", 45L, "item5", 1L, "item4", 1L, null, null),
+                                Arrays.asList(event.getData())
+                        );
                         Assert.assertTrue(event.isExpired());
                     }
                 }

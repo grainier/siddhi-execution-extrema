@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,10 +15,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.extension.siddhi.execution.extrema;
 
 import org.wso2.extension.siddhi.execution.extrema.util.AbstractTopKBottomKFinder;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.Counter;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
@@ -75,9 +75,8 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
     private AbstractTopKBottomKFinder<Object> topKBottomKFinder;
 
     private Object[] lastOutputData;
-    private StreamEvent lastStreamEvent = null;     // Used for returning the topK/bottomK items and frequencies
-    private StreamEvent resetEvent = null;
-    private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
+    private StreamEvent lastStreamEvent;     // Used for returning the topK/bottomK items and frequencies
+    private ComplexEventChunk<StreamEvent> expiredEventChunk;
 
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition,
@@ -118,6 +117,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
                         "KTimeBatchStreamProcessor should be INT or LONG. but found " + attributeType
                 );
             }
+            if (windowTime <= 0) {
+                throw new ExecutionPlanValidationException(
+                        "Window time parameter for " + getExtensionNamePrefix() +
+                        "KTimeBatchStreamProcessor should be greater than 0. but found " + attributeType
+                );
+            }
         } else {
             throw new ExecutionPlanValidationException(
                     "Window time parameter for " + getExtensionNamePrefix() +
@@ -131,6 +136,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
             Attribute.Type attributeType = attributeExpressionExecutors[2].getReturnType();
             if (attributeType == Attribute.Type.INT) {
                 querySize = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[2]).getValue();
+                if (querySize <= 0) {
+                    throw new ExecutionPlanValidationException(
+                            "Query size parameter for " + getExtensionNamePrefix() +
+                            "KLengthBatchStreamProcessor should be greater than 0. but found " + attributeType
+                    );
+                }
             } else {
                 throw new ExecutionPlanValidationException(
                         "Query size parameter for " + getExtensionNamePrefix() +
@@ -151,6 +162,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
                 if (attributeType == Attribute.Type.INT) {
                     startTime = executionPlanContext.getTimestampGenerator().currentTime() +
                             (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[3]).getValue();
+                    if (startTime <= 0) {
+                        throw new ExecutionPlanValidationException(
+                                "Start time parameter for " + getExtensionNamePrefix() +
+                                        "KTimeBatchStreamProcessor should be greater than 0. but found " + attributeType
+                        );
+                    }
                 } else {
                     throw new ExecutionPlanValidationException(
                             "Start time parameter for " + getExtensionNamePrefix() +
@@ -164,10 +181,12 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
         List<Attribute> newAttributes = new ArrayList<Attribute>();
         for (int i = 0; i < querySize; i++) {
             newAttributes.add(new Attribute(
-                    getExtensionNamePrefix() + (i + 1) + "Element", attrVariableExpressionExecutor.getReturnType())
+                    getExtensionNamePrefix() + (i + 1) + Constants.TOP_K_BOTTOM_K_ELEMENT,
+                    attrVariableExpressionExecutor.getReturnType())
             );
             newAttributes.add(new Attribute(
-                    getExtensionNamePrefix() + (i + 1) + "Frequency", Attribute.Type.LONG)
+                    getExtensionNamePrefix() + (i + 1) + Constants.TOP_K_BOTTOM_K_FREQUENCY,
+                    Attribute.Type.LONG)
             );
         }
         return newAttributes;
@@ -179,6 +198,7 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
         ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
         synchronized (this) {
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
+            // todo change the start time implementation to timeBatchWindow's impletation
             if (currentTime >= startTime) {
                 while (streamEventChunk.hasNext()) {
                     StreamEvent streamEvent = streamEventChunk.next();
@@ -201,13 +221,15 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
                         if (expiredEventChunk.getFirst() != null) {
                             // Adding the expired events
                             if (outputExpectsExpiredEvents) {
+                                expiredEventChunk.getFirst().setTimestamp(currentTime);
                                 outputStreamEventChunk.add(expiredEventChunk.getFirst());
                                 expiredEventChunk.clear();
                             }
 
                             // Adding the reset event
+                            StreamEvent resetEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
+                            resetEvent.setType(ComplexEvent.Type.RESET);
                             outputStreamEventChunk.add(resetEvent);
-                            resetEvent = null;
                         }
 
                         // Adding the last event with the topK frequencies for the window
@@ -234,7 +256,6 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
 
                                 // Setting the event to be expired in the next window
                                 StreamEvent expiredStreamEvent = streamEventCloner.copyStreamEvent(lastStreamEvent);
-                                expiredStreamEvent.setTimestamp(currentTime);
                                 expiredStreamEvent.setType(ComplexEvent.Type.EXPIRED);
                                 expiredEventChunk.add(expiredStreamEvent);
                             }
@@ -243,12 +264,6 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
                         // Resetting window
                         topKBottomKFinder = createNewTopKBottomKFinder();
                         scheduler.notifyAt(currentTime + windowTime);
-
-                        // Setting the reset event to be used in the end of the window
-                        if (resetEvent == null) {
-                            resetEvent = streamEventCloner.copyStreamEvent(streamEventChunk.getFirst());
-                            resetEvent.setType(ComplexEvent.Type.RESET);
-                        }
                     }
                 }
             }
@@ -273,13 +288,11 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
     public Object[] currentState() {
         if (outputExpectsExpiredEvents) {
             return new Object[]{
-                    topKBottomKFinder, windowTime, querySize, startTime,
-                    lastStreamEvent, resetEvent, expiredEventChunk
+                    topKBottomKFinder, windowTime, querySize, startTime, lastStreamEvent, expiredEventChunk
             };
         } else {
             return new Object[]{
-                    topKBottomKFinder, windowTime, querySize, startTime,
-                    lastStreamEvent, resetEvent
+                    topKBottomKFinder, windowTime, querySize, startTime, lastStreamEvent
             };
         }
     }
@@ -292,9 +305,8 @@ public abstract class AbstractKTimeBatchStreamProcessorExtension
         startTime = (Long) state[3];
 
         lastStreamEvent = (StreamEvent) state[4];
-        resetEvent = (StreamEvent) state[5];
-        if (state.length == 7) {
-            expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[6];
+        if (state.length == 6) {
+            expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[5];
         }
     }
 

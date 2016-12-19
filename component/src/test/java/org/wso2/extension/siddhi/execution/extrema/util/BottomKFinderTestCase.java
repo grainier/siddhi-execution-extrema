@@ -32,12 +32,19 @@ public class BottomKFinderTestCase {
 
     @Before
     public void init() {
-        bottomKFinder = new BottomKFinder<String>();
+        bottomKFinder = new BottomKFinder<String>(5);
     }
 
     @Test
     public void testTopKLengthBatchStreamProcessorExtension() {
         log.info("BottomKFinder TestCase 1");
+
+        bottomKFinder.offer("item4");
+        bottomKFinder.offer("item4");
+        bottomKFinder.offer("item4");
+        bottomKFinder.offer("item5");
+        bottomKFinder.offer("item5");
+        bottomKFinder.offer("item5");
 
         bottomKFinder.offer("item1");
         bottomKFinder.offer("item1");
@@ -45,14 +52,9 @@ public class BottomKFinderTestCase {
         bottomKFinder.offer("item2");
         bottomKFinder.offer("item2");
         bottomKFinder.offer("item3");
-        bottomKFinder.offer("item4");
-        bottomKFinder.offer("item4");
-        bottomKFinder.offer("item4");
-        bottomKFinder.offer("item4");
-        bottomKFinder.offer("item5");
-        bottomKFinder.offer("item5");
-        bottomKFinder.offer("item5");
-        bottomKFinder.offer("item5");
+
+        bottomKFinder.offer("item6", 3);    // To replace item4
+        bottomKFinder.offer("item7", 3);    // To replace item5
 
         List<Counter<String>> counters = bottomKFinder.get(3);
         Assert.assertEquals(3, counters.size());
@@ -61,7 +63,7 @@ public class BottomKFinderTestCase {
         Assert.assertEquals(1, counters.get(0).getCount());
         Assert.assertEquals("item2", counters.get(1).getItem());
         Assert.assertEquals(2, counters.get(1).getCount());
-        Assert.assertEquals("item1", counters.get(2).getItem());
+        Assert.assertEquals("item7", counters.get(2).getItem());
         Assert.assertEquals(3, counters.get(2).getCount());
 
         bottomKFinder.offer("item3", -1);
@@ -71,13 +73,13 @@ public class BottomKFinderTestCase {
 
         Assert.assertEquals("item2", counters.get(0).getItem());
         Assert.assertEquals(2, counters.get(0).getCount());
-        Assert.assertEquals("item1", counters.get(1).getItem());
+        Assert.assertEquals("item7", counters.get(1).getItem());
         Assert.assertEquals(3, counters.get(1).getCount());
-        Assert.assertEquals("item4", counters.get(2).getItem());
-        Assert.assertEquals(4, counters.get(2).getCount());
+        Assert.assertEquals("item6", counters.get(2).getItem());
+        Assert.assertEquals(3, counters.get(2).getCount());
 
-        bottomKFinder.offer("item4", -4);
-        bottomKFinder.offer("item5", -4);
+        bottomKFinder.offer("item6", -3);
+        bottomKFinder.offer("item7", -3);
 
         counters = bottomKFinder.get(3);
         Assert.assertEquals(2, counters.size());

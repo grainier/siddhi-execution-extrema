@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,20 +16,23 @@
  * under the License.
  *
  */
-
 package org.wso2.extension.siddhi.execution.extrema.util;
 
+/**
+ * Used for storing the item value and the frequency
+ * Used in TopK/BottomK extensions
+ *
+ * @param <T> The type of item to store
+ */
 public class Counter<T> {
     private ListNode<AbstractTopKBottomKFinder<T>.Bucket> bucketNode;
 
     private T item;
     private long count;
-    private long error;
 
     public Counter(ListNode<AbstractTopKBottomKFinder<T>.Bucket> bucket, T item) {
         bucketNode = bucket;
         count = 0;
-        error = 0;
         this.item = item;
     }
 
@@ -41,6 +44,10 @@ public class Counter<T> {
         this.bucketNode = bucketNode;
     }
 
+    public void increaseCount(long increaseAmount) {
+        count += increaseAmount;
+    }
+
     public T getItem() {
         return item;
     }
@@ -49,19 +56,11 @@ public class Counter<T> {
         this.item = item;
     }
 
-    public void increaseCount(long increaseAmount) {
-        count += increaseAmount;
-    }
-
     public long getCount() {
         return count;
     }
 
-    public long getError() {
-        return error;
-    }
-
-    public void setError(long error) {
-        this.error = error;
+    public void setCount(long count) {
+        this.count = count;
     }
 }

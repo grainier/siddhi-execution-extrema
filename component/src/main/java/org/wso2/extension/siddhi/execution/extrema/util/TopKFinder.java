@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -14,9 +14,7 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
-
 package org.wso2.extension.siddhi.execution.extrema.util;
 
 import java.util.ArrayList;
@@ -45,11 +43,11 @@ public class TopKFinder<T> extends AbstractTopKBottomKFinder<T> {
         List<Counter<T>> topK = new ArrayList<Counter<T>>(k);
         for (ListNode<Bucket> bNode = bucketList.tail(); bNode != null; bNode = bNode.getPreviousNode()) {
             Bucket b = bNode.getValue();
-            for (Counter<T> c : b.getCounterList()) {
+            for (ListNode<Counter<T>> cNode = b.getCounterList().tail(); cNode != null; cNode = cNode.getPreviousNode()) {
+                topK.add(cNode.getValue());
                 if (topK.size() == k) {
                     return topK;
                 }
-                topK.add(c);
             }
         }
         return topK;

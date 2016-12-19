@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,11 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.wso2.extension.siddhi.execution.extrema;
 
 import org.wso2.extension.siddhi.execution.extrema.util.AbstractTopKBottomKFinder;
 import org.wso2.extension.siddhi.execution.extrema.util.BottomKFinder;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 
 public class BottomKTimeBatchStreamProcessorExtension extends AbstractKTimeBatchStreamProcessorExtension {
     @Override
@@ -29,6 +29,6 @@ public class BottomKTimeBatchStreamProcessorExtension extends AbstractKTimeBatch
 
     @Override
     protected String getExtensionNamePrefix() {
-        return "Bottom";
+        return Constants.TOP_K_BOTTOM_K_BOTTOM;
     }
 }
