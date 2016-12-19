@@ -63,15 +63,12 @@ public class MaxByMinByExecutor {
      * @param functionType MIN/MAX
      * @return outputEvent
      */
-    public StreamEvent getResult(String functionType) {
+    public StreamEvent getResult(Constants.Type functionType) {
         StreamEvent outputEvent;
-        if (functionType.equals(MaxByMinByConstants.MIN_BY)) {
-            //// TODO: 15/12/16 make it one line
-            Object minEventKey = sortedEventMap.firstKey();
-            outputEvent = sortedEventMap.get(minEventKey);
+        if (functionType.equals(Constants.Type.MIN_BY)) {
+            outputEvent = sortedEventMap.get(sortedEventMap.firstKey());
         } else {
-            Object maxEventKey = sortedEventMap.lastKey();
-            outputEvent = sortedEventMap.get(maxEventKey);
+            outputEvent = sortedEventMap.get(sortedEventMap.lastKey());
         }
         return outputEvent;
     }

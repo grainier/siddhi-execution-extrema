@@ -18,7 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -158,11 +158,11 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
 
                 //Get the event which hold the minimum or maximum event
 
-                if (minByMaxByExecutorType.equals(MaxByMinByConstants.MAX_BY)) {
+                if (minByMaxByExecutorType.equals(Constants.MAX_BY)) {
                     resultEvent = MaxByMinByExecutor
                             .getMaxEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
                     oldEvent = resultEvent;
-                } else if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
+                } else if (minByMaxByExecutorType.equals(Constants.MIN_BY)) {
                     resultEvent = MaxByMinByExecutor
                             .getMinEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
                     oldEvent = resultEvent;

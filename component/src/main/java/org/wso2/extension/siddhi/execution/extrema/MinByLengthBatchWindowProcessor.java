@@ -18,7 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 
 /*
 * Sample Query:
@@ -34,8 +34,8 @@ import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
 * */
 public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
     public MinByLengthBatchWindowProcessor() {
-        super.minByMaxByExecutorType = MaxByMinByConstants.MIN_BY;
-//        super.minByMaxByExtensionType = MaxByMinByConstants.MinByLengthBatch;
+        super.minByMaxByExecutorType = Constants.MIN_BY;
+//        super.minByMaxByExtensionType = Constants.MinByLengthBatch;
     }
 
 }

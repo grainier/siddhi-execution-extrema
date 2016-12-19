@@ -21,7 +21,7 @@ package org.wso2.extension.siddhi.execution.extrema.util;
 /**
  * Holds the constants required to retrieve minimum or maximum event
  */
-public class MaxByMinByConstants {
+public class Constants {
     public static final String MIN_BY = "MIN_BY";
     public static final String MAX_BY = "MAX_BY";
     public static final String MinByTimeBatch = "MinByTimeBatch";
@@ -32,4 +32,9 @@ public class MaxByMinByConstants {
     public static final String MaxByLengthBatch = "MaxByLengthBatch";
     public static final String MinByLength = "MinByLength";
     public static final String MaxByLength = "MaxByLength";
+
+    public static enum Type {
+        MAX_BY, MIN_BY;
+    }
+
 }

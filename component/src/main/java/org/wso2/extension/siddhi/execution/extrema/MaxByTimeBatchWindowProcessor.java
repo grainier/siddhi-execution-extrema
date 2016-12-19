@@ -18,7 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 
 /**
  * Sample Query:
@@ -33,6 +33,6 @@ import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
 
 public class MaxByTimeBatchWindowProcessor extends MaxByMinByTimeBatchWindowProcessor {
     public MaxByTimeBatchWindowProcessor() {
-        maxByMinByType = MaxByMinByConstants.MAX_BY;
+        maxByMinByType = Constants.Type.MAX_BY;
     }
 }

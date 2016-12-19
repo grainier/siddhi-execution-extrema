@@ -18,7 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -93,7 +93,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
         this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         maxByMinByExecutor = new MaxByMinByExecutor();
 
-        if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
+        if (minByMaxByExecutorType.equals(Constants.MIN_BY)) {
             maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         } else {
             maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);

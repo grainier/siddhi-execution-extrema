@@ -18,7 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEvent;
@@ -52,7 +52,7 @@ import java.util.Map;
 
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
-    protected String maxByMinByType;
+    protected Constants.Type maxByMinByType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
     private StreamEvent resetEvent = null;
@@ -200,10 +200,10 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                     continue;
                 }
                 StreamEvent clonedStreamEvent = streamEventCloner.copyStreamEvent(streamEvent);
-                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
+                if (maxByMinByType.equals(Constants.MIN_BY)) {
                     currentEvent = MaxByMinByExecutor
                             .getMinEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
-                } else if (maxByMinByType.equals(MaxByMinByConstants.MAX_BY)) {
+                } else if (maxByMinByType.equals(Constants.MAX_BY)) {
                     currentEvent = MaxByMinByExecutor
                             .getMaxEventBatchProcessor(clonedStreamEvent, currentEvent, sortByAttribute);
                 }

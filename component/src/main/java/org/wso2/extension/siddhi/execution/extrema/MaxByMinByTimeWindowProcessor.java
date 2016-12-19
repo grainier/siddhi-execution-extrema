@@ -18,6 +18,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
+import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -45,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-//todo remove wildcard import
 /**
  * Abstract class which gives the min/max event in a Time Window
  * according to given attribute as events arrive and expire
@@ -54,7 +54,7 @@ import java.util.TreeMap;
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
 
-    protected String maxByMinByType;
+    protected Constants.Type maxByMinByType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
@@ -264,7 +264,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
      */
     @Override public Object[] currentState() {
         // TODO: 15/12/16
-        return new Object[] { minByMaxByExecutor.getSortedEventMap() };
+        return new Object[] { currentEvent, minByMaxByExecutor.getSortedEventMap(), expiredEventChunk };
     }
 
     /**
@@ -275,7 +275,9 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
      *              the same order provided by currentState().
      */
     @Override public void restoreState(Object[] state) {
-        minByMaxByExecutor.setSortedEventMap((TreeMap) state[0]);
+        currentEvent = (StreamEvent)state[0];
+        minByMaxByExecutor.setSortedEventMap((TreeMap) state[1]);
+        expiredEventChunk = (ComplexEventChunk<StreamEvent>) state[2];
     }
 }
 
