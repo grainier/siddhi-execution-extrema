@@ -58,13 +58,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /*
      * minByMaxByExecutorType holds the value to indicate MIN or MAX
      */
-    String minByMaxByExecutorType;
-
-    /*
-    minByMaxByExtensionType holds the extension type (MaxByLengthBatch/MinByLengthBatch)
-     */
-    //String minByMaxByExtensionType;
-
+    protected String minByMaxByExecutorType;
     /*
     Attribute which is used to find Extrema event
      */
@@ -110,26 +104,37 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
 
         Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
 
-        if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                == Attribute.Type.STRING) && (attributeExpressionExecutors[0] instanceof VariableExpressionExecutor))) {
+        if (attributeExpressionExecutors[0] instanceof VariableExpressionExecutor) {
+            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                    == Attribute.Type.STRING))) {
+                throw new ExecutionPlanValidationException(
+                        "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
+                                + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                                + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
+                                + ", but found " + attributeType.toString());
+            }
+        } else {
             throw new ExecutionPlanValidationException(
-                    "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
-                            + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
-                            + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
-                            + ", but found " + attributeType.toString() + " or first argument is not a Variable ");
+                    "LengthBatch window should have variable parameter attribute but found a constant attribute "
+                            + attributeExpressionExecutors[0].getClass().getCanonicalName());
+        }
 
-        }
         attributeType = attributeExpressionExecutors[1].getReturnType();
-        if (!(((attributeType == Attribute.Type.INT))
-                && attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor)) {
+        if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
+            if (!(((attributeType == Attribute.Type.INT)))) {
+                throw new ExecutionPlanValidationException(
+                        "Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType
+                                + " window, " + "required " + Attribute.Type.INT +
+                                ", but found " + attributeType.toString() + " or second argument is not a constant");
+            }
+        } else {
             throw new ExecutionPlanValidationException(
-                    "Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType
-                            + " window, " + "required " + Attribute.Type.INT +
-                            ", but found " + attributeType.toString() + " or second argument is not a constant");
+                    "LengthBatch window should have constant parameter attribute but found a dynamic attribute "
+                            + attributeExpressionExecutors[1].getClass().getCanonicalName());
         }
-            minByMaxByExecutorAttribute = attributeExpressionExecutors[0];
-            length = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
+        minByMaxByExecutorAttribute = attributeExpressionExecutors[0];
+        length = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1]).getValue();
 
     }
 
