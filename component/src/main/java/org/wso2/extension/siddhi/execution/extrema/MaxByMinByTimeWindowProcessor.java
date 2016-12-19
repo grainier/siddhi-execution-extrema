@@ -1,20 +1,19 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *  Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
- * Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License.
- * You may obtain a copy of the License at
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
+ *   Unless required by applicable law or agreed to in writing,
+ *   software distributed under the License is distributed on an
+ *   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *   KIND, either express or implied. See the License for the
+ *   specific language governing permissions and limitations
+ *   under the License.
  */
 
 package org.wso2.extension.siddhi.execution.extrema;
@@ -95,16 +94,24 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
         this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         minByMaxByExecutor = new MaxByMinByExecutor();
         if (attributeExpressionExecutors.length == 2) {
-            Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                    == Attribute.Type.STRING))) {
+            if( attributeExpressionExecutors[0] instanceof VariableExpressionExecutor){
+                Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+                sortByAttribute = attributeExpressionExecutors[0];
+                if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                        == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                        == Attribute.Type.STRING))) {
+                    throw new ExecutionPlanValidationException(
+                            "Invalid parameter type found for the first argument of " + windowType + " required "
+                                    + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                                    + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
+                                    + attributeType.toString());
+                }
+            }
+
+            else {
                 throw new ExecutionPlanValidationException(
-                        "Invalid parameter type found for the first argument of " + windowType + " required "
-                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                + attributeType.toString());
+                    "Parameter should be a dynamic attribute but found"
+                            + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
 
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
