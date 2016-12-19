@@ -94,7 +94,7 @@ public class MaxByTimeBatchWindowTestCase {
     }
     @Test
     public void maxbyTimeBatchWindowTest2() throws InterruptedException {
-
+    //// TODO: 15/12/16  add logs 
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -120,9 +120,7 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 888f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 1});
         Thread.sleep(1100);
-        System.out.println();
         Thread.sleep(1100);
-        System.out.println();
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
         inputHandler.send(new Object[]{"IBM", 777f, 3});
