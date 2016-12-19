@@ -36,7 +36,7 @@ import java.util.List;
 import static org.junit.Assert.assertArrayEquals;
 
 /**
- * Created by mathuriga on 30/09/16.
+ * Test cases for MinByLengthWindowProcessor
  */
 public class MinByLengthWindowProcessorTestCase {
 

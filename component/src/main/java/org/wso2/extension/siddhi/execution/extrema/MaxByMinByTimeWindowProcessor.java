@@ -42,6 +42,7 @@ import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
 
+//todo remove wildcard import
 import java.util.*;
 
 /**
@@ -52,6 +53,7 @@ import java.util.*;
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
 
+    //todo private
     protected String maxByMinByType;
     protected String windowType;
     private long timeInMilliSeconds;
@@ -146,6 +148,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
                 long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
 
                 // Iterate through the sortedEventMap and remove the expired events
+                //// TODO: 15/12/16  entryset().iterator()
                 Set set = minByMaxByExecutor.getSortedEventMap().entrySet();
                 Iterator iterator = set.iterator();
                 while (iterator.hasNext()) {
@@ -184,6 +187,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
             //retrieve the min/max event and add to streamEventChunk
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
+                // TODO: 15/12/16 use directly getResult(maxbyminbyType)
+//                tempEvent = minByMaxByExecutor.getResult(maxByMinByType);
                 if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
@@ -258,6 +263,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
      * @return stateful objects of the processing element as an array
      */
     @Override public Object[] currentState() {
+        // TODO: 15/12/16
         return new Object[] { minByMaxByExecutor.getSortedEventMap() };
     }
 

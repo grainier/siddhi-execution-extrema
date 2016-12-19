@@ -49,18 +49,33 @@ import java.util.Map;
  * Abstract class which gives the event which holds minimum or maximum value corresponding to given attribute in a Length window.
  */
 public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor implements FindableProcessor {
+    /*
+      Attribute which is used to find Extrema event
+   */
     private ExpressionExecutor minByMaxByExecutorAttribute;
+    /*
+     * minByMaxByExecutorType holds the value to indicate MIN or MAX
+     */
     protected String minByMaxByExecutorType;
+    /*
+   minByMaxByExtensionType holds the extension type (MaxByLength/MinByLength)
+    */
     protected String minByMaxByExtensionType;
+    /*
+    minByMaxByExecutor used to get extrema event
+     */
     private MaxByMinByExecutor maxByMinByExecutor;
     private int length;
     private int count = 0;
-    private ComplexEventChunk<StreamEvent> internalWindowChunk = null;
+    private ComplexEventChunk<StreamEvent> expiredEventChunk = null;
     private ComplexEventChunk<StreamEvent> outputStreamEventChunk = new ComplexEventChunk<StreamEvent>(true);
     private ExecutionPlanContext executionPlanContext;
     private StreamEvent outputStreamEvent;
+    /*
+    to holds the list of events that should be in a sliding length window.
+     */
     private List<StreamEvent> events = new ArrayList<StreamEvent>();
-    StreamEvent toBeExpiredEvent = null;
+    private StreamEvent expiredEvent = null;
 
     public void setOutputStreamEvent(StreamEvent outputSreamEvent) {
         this.outputStreamEvent = outputSreamEvent;
@@ -72,12 +87,13 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param expressionExecutors  the executors of each function parameters
      * @param executionPlanContext the context of the execution plan
      */
-    @Override protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
+    @Override
+    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
         this.executionPlanContext = executionPlanContext;
-        this.internalWindowChunk = new ComplexEventChunk<StreamEvent>(false);
+        this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         maxByMinByExecutor = new MaxByMinByExecutor();
-        //this.events=new ArrayList<StreamEvent>();
+
         if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY)) {
             maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
         } else {
@@ -124,8 +140,9 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param processor         the next processor to which the success events need to be passed
      * @param streamEventCloner helps to clone the incoming event for local storage or modification
      */
-    @Override protected void process(ComplexEventChunk<StreamEvent> complexEventChunk, Processor processor,
-            StreamEventCloner streamEventCloner) {
+    @Override
+    protected void process(ComplexEventChunk<StreamEvent> complexEventChunk, Processor processor,
+                           StreamEventCloner streamEventCloner) {
         List<ComplexEventChunk<StreamEvent>> streamEventChunks = new ArrayList<ComplexEventChunk<StreamEvent>>();
         synchronized (this) {
             long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
@@ -137,33 +154,37 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
                 if (count != 0) {
                     outputStreamEventChunk.clear();
-                    internalWindowChunk.clear();
+                    expiredEventChunk.clear();
                 }
 
                 //get the parameter value for every events
+                // TODO: 15/12/16 remove using seperate method change the parametervalue to attributevalue
                 Object parameterValue = getParameterValue(minByMaxByExecutorAttribute, streamEvent);
 
-                //insert the cloned event into treemap
+                //insert the cloned event into tree map
                 maxByMinByExecutor.insert(clonedStreamEvent, parameterValue);
 
                 if (count < length) {
                     count++;
 
                     //get the output event
+                    // TODO: 15/12/16 remove method and assign it directly 
                     setOutputStreamEvent(maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
 
-                    if (toBeExpiredEvent != null) {
-                        if (outputStreamEvent != toBeExpiredEvent) {
-                            toBeExpiredEvent.setTimestamp(currentTime);
-                            toBeExpiredEvent.setType(StateEvent.Type.EXPIRED);
-                            outputStreamEventChunk.add(toBeExpiredEvent);
+                    if (expiredEvent != null) {
+                        // TODO: 15/12/16 use .equals 
+                        if (outputStreamEvent != expiredEvent) {
+                            expiredEvent.setTimestamp(currentTime);
+                            expiredEvent.setType(StateEvent.Type.EXPIRED);
+                            outputStreamEventChunk.add(expiredEvent);
                         }
                     }
 
                     outputStreamEventChunk.add(outputStreamEvent);
                     //add the event which is to be expired
-                    internalWindowChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
-                    toBeExpiredEvent = outputStreamEvent;
+                    // TODO: 15/12/16 change ex chunk to find mthod 
+                    expiredEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
+                    expiredEvent = outputStreamEvent;
 
                     //System.out.println(outputStreamEventChunk);
                     if (outputStreamEventChunk.getFirst() != null) {
@@ -185,17 +206,17 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                         //get the output event
                         setOutputStreamEvent(
                                 maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType()));
-                        if (toBeExpiredEvent != null) {
-                            if (outputStreamEvent != toBeExpiredEvent) {
-                                toBeExpiredEvent.setTimestamp(currentTime);
-                                toBeExpiredEvent.setType(StateEvent.Type.EXPIRED);
-                                outputStreamEventChunk.add(toBeExpiredEvent);
+                        if (expiredEvent != null) {
+                            if (outputStreamEvent != expiredEvent) {
+                                expiredEvent.setTimestamp(currentTime);
+                                expiredEvent.setType(StateEvent.Type.EXPIRED);
+                                outputStreamEventChunk.add(expiredEvent);
                             }
 
                         }
                         outputStreamEventChunk.add(outputStreamEvent);
-                        internalWindowChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
-                        toBeExpiredEvent = outputStreamEvent;
+                        expiredEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
+                        expiredEvent = outputStreamEvent;
 
                         //                        System.out.println(outputStreamEventChunk);
                         if (outputStreamEventChunk.getFirst() != null) {
@@ -221,7 +242,8 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * This will be called after initializing the system and before
      * starting to process the events.
      */
-    @Override public void start() {
+    @Override
+    public void start() {
         //Do nothing
     }
 
@@ -230,7 +252,8 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * the acquired resources for processing.
      * This will be called before shutting down the system.
      */
-    @Override public void stop() {
+    @Override
+    public void stop() {
         //Do nothing
     }
 
@@ -240,9 +263,10 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      *
      * @return stateful objects of the processing element as an array
      */
-    @Override public Object[] currentState() {
-        return new Object[] { new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", toBeExpiredEvent),
-                new AbstractMap.SimpleEntry<String, Object>("Count", count) };
+    @Override
+    public Object[] currentState() {
+        return new Object[]{new AbstractMap.SimpleEntry<String, Object>("ExpiredEvent", expiredEvent),
+                new AbstractMap.SimpleEntry<String, Object>("Count", count)};
     }
 
     /**
@@ -252,10 +276,11 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param state the stateful objects of the element as an array on
      *              the same order provided by currentState().
      */
-    @Override public void restoreState(Object[] state) {
-        toBeExpiredEvent = null;
+    @Override
+    public void restoreState(Object[] state) {
+        expiredEvent = null;
         Map.Entry<String, Object> stateEntry = (Map.Entry<String, Object>) state[0];
-        toBeExpiredEvent = (StreamEvent) stateEntry.getValue();
+        expiredEvent = (StreamEvent) stateEntry.getValue();
         Map.Entry<String, Object> stateEntry2 = (Map.Entry<String, Object>) state[1];
         count = (Integer) stateEntry2.getValue();
     }
@@ -267,7 +292,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @param streamEvent       event  at processor
      * @return the attributeValue
      */
-
+// TODO: 15/12/16 remove 
     public Object getParameterValue(ExpressionExecutor functionParameter, StreamEvent streamEvent) {
         Object attributeValue;
         attributeValue = functionParameter.execute(streamEvent);
@@ -283,7 +308,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * @return the matched events
      */
     public synchronized StreamEvent find(StateEvent matchingEvent, Finder finder) {
-        return finder.find(matchingEvent, this.internalWindowChunk, this.streamEventCloner);
+        return finder.find(matchingEvent, this.expiredEventChunk, this.streamEventCloner);
     }
 
     /**
@@ -299,10 +324,10 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
      * matchingEvent
      */
     public Finder constructFinder(Expression expression, MatchingMetaStateHolder matchingMetaStateHolder,
-            ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors,
-            Map<String, EventTable> eventTableMap) {
+                                  ExecutionPlanContext executionPlanContext, List<VariableExpressionExecutor> variableExpressionExecutors,
+                                  Map<String, EventTable> eventTableMap) {
         return OperatorParser
-                .constructOperator(this.internalWindowChunk, expression, matchingMetaStateHolder, executionPlanContext,
+                .constructOperator(this.expiredEventChunk, expression, matchingMetaStateHolder, executionPlanContext,
                         variableExpressionExecutors, eventTableMap);
     }
 }
