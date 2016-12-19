@@ -110,7 +110,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
 
             else {
                 throw new ExecutionPlanValidationException(
-                    "Parameter should be a dynamic attribute but found"
+                    "First parameter should be a dynamic attribute but found"
                             + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
 
@@ -195,13 +195,13 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
                 // TODO: 15/12/16 use directly getResult(maxbyminbyType)
-//                tempEvent = minByMaxByExecutor.getResult(maxByMinByType);
+                tempEvent = minByMaxByExecutor.getResult(maxByMinByType);
                 if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
                 } else {
                     tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
                 }
-                // TODO: 12/15/16  use .equals() to compare two objects  
+                // TODO: 12/15/16  use .equals() to compare two objects
                 if (tempEvent != currentEvent) {
                     StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);
                     expiredEventChunk.add(event);

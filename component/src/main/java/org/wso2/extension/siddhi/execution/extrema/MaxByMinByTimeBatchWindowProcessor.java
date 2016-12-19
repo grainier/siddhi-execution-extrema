@@ -75,17 +75,23 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             ExecutionPlanContext executionPlanContext) {
         this.executionPlanContext = executionPlanContext;
         if (attributeExpressionExecutors.length == 2) {
-            //TODO: check for an instance variableExpressionExecutor
-            Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                    == Attribute.Type.STRING))) {
+            if( attributeExpressionExecutors[0] instanceof  VariableExpressionExecutor){
+                Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+                sortByAttribute = attributeExpressionExecutors[0];
+                if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                        == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                        == Attribute.Type.STRING))) {
+                    throw new ExecutionPlanValidationException(
+                            "Invalid parameter type found for the first argument of " + windowType + " " + "required "
+                                    + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                                    + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
+                                    + attributeType.toString());
+                }
+            }
+            else {
                 throw new ExecutionPlanValidationException(
-                        "Invalid parameter type found for the first argument of " + windowType + " " + "required "
-                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                + attributeType.toString());
+                        "First parameter should be a dynamic attribute but found"
+                                + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
                 if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.INT) {
@@ -106,17 +112,25 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                                 + attributeExpressionExecutors[1].getClass().getCanonicalName());
             }
         } else if (attributeExpressionExecutors.length == 3) {
-            Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
-            sortByAttribute = attributeExpressionExecutors[0];
-            if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
-                    == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
-                    == Attribute.Type.STRING))) {
-                throw new ExecutionPlanValidationException(
-                        "Invalid parameter type found for the first argument of " + windowType + " required "
-                                + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                + attributeType.toString());
+            if( attributeExpressionExecutors[0] instanceof VariableExpressionExecutor){
+                Attribute.Type attributeType = attributeExpressionExecutors[0].getReturnType();
+                sortByAttribute = attributeExpressionExecutors[0];
+                if (!((attributeType == Attribute.Type.DOUBLE) || (attributeType == Attribute.Type.INT) || (attributeType
+                        == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
+                        == Attribute.Type.STRING))) {
+                    throw new ExecutionPlanValidationException(
+                            "Invalid parameter type found for the first argument of " + windowType + " required "
+                                    + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                                    + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
+                                    + attributeType.toString());
+                }
             }
+            else {
+                throw new ExecutionPlanValidationException(
+                        "First parameter should be a dynamic attribute but found"
+                                + attributeExpressionExecutors[1].getClass().getCanonicalName());
+            }
+
             if (attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor) {
                 if (attributeExpressionExecutors[1].getReturnType() == Attribute.Type.INT) {
                     timeInMilliSeconds = (Integer) ((ConstantExpressionExecutor) attributeExpressionExecutors[1])
