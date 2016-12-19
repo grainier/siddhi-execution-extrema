@@ -53,7 +53,6 @@ import java.util.Map;
 public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
     protected String maxByMinByType;
-    protected String windowType;
     private long timeInMilliSeconds;
     private long nextEmitTime = -1;
     private StreamEvent resetEvent = null;
@@ -82,8 +81,8 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                         == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
                         == Attribute.Type.STRING))) {
                     throw new ExecutionPlanValidationException(
-                            "Invalid parameter type found for the first argument of " + windowType + " " + "required "
-                                    + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
+                            "Invalid parameter type found for the first argument of " + maxByMinByType + " time batch window "
+                                    + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
                                     + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
                                     + attributeType.toString());
                 }
@@ -119,10 +118,10 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
                         == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
                         == Attribute.Type.STRING))) {
                     throw new ExecutionPlanValidationException(
-                            "Invalid parameter type found for the first argument of " + windowType + " required "
-                                    + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
-                                    + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
-                                    + attributeType.toString());
+                            "Invalid parameter type found for the first argument of " + maxByMinByType + " time batch window"
+                                    + " required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                                    + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING
+                                    + ", but found " + attributeType.toString());
                 }
             }
             else {
@@ -160,7 +159,7 @@ public abstract class MaxByMinByTimeBatchWindowProcessor extends WindowProcessor
             }
         } else {
             throw new ExecutionPlanValidationException(
-                    windowType + " should only have two or three parameters. but found "
+                    maxByMinByType + " time batch window should only have two or three parameters. but found "
                             + attributeExpressionExecutors.length + " input attributes");
         }
     }

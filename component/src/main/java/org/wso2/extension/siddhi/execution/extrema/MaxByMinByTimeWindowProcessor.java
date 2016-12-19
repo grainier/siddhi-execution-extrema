@@ -18,7 +18,6 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
-import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
 import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByExecutor;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.event.ComplexEventChunk;
@@ -41,9 +40,12 @@ import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.query.api.exception.ExecutionPlanValidationException;
 import org.wso2.siddhi.query.api.expression.Expression;
 
-//todo remove wildcard import
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+//todo remove wildcard import
 /**
  * Abstract class which gives the min/max event in a Time Window
  * according to given attribute as events arrive and expire
@@ -52,9 +54,7 @@ import java.util.*;
 public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
         implements SchedulingProcessor, FindableProcessor {
 
-    //todo private
     protected String maxByMinByType;
-    protected String windowType;
     private long timeInMilliSeconds;
     private Scheduler scheduler;
     private ExecutionPlanContext executionPlanContext;
@@ -101,7 +101,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
                         == Attribute.Type.FLOAT) || (attributeType == Attribute.Type.LONG) || (attributeType
                         == Attribute.Type.STRING))) {
                     throw new ExecutionPlanValidationException(
-                            "Invalid parameter type found for the first argument of " + windowType + " required "
+                            "Invalid parameter type found for the first argument of " + maxByMinByType + " time window required "
                                     + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or " + Attribute.Type.FLOAT
                                     + " or " + Attribute.Type.DOUBLE + " or " + Attribute.Type.STRING + ", but found "
                                     + attributeType.toString());
@@ -134,7 +134,7 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
             }
         } else {
             throw new ExecutionPlanValidationException(
-                    "Invalid no of arguments passed to " + windowType + ", " + "required 2, but found "
+                    "Invalid no of arguments passed to " + maxByMinByType + " time window, " + "required 2, but found "
                             + attributeExpressionExecutors.length + " input attributes");
         }
     }
@@ -155,9 +155,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
                 long currentTime = executionPlanContext.getTimestampGenerator().currentTime();
 
                 // Iterate through the sortedEventMap and remove the expired events
-                //// TODO: 15/12/16  entryset().iterator()
-                Set set = minByMaxByExecutor.getSortedEventMap().entrySet();
-                Iterator iterator = set.iterator();
+
+                Iterator iterator = minByMaxByExecutor.getSortedEventMap().entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry entry = (Map.Entry) iterator.next();
                     StreamEvent expiredEvent = (StreamEvent) entry.getValue();
@@ -194,15 +193,8 @@ public abstract class MaxByMinByTimeWindowProcessor extends WindowProcessor
             //retrieve the min/max event and add to streamEventChunk
             if (streamEvent != null && streamEvent.getType() == StreamEvent.Type.CURRENT) {
                 StreamEvent tempEvent;
-                // TODO: 15/12/16 use directly getResult(maxbyminbyType)
                 tempEvent = minByMaxByExecutor.getResult(maxByMinByType);
-                if (maxByMinByType.equals(MaxByMinByConstants.MIN_BY)) {
-                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MIN_BY);
-                } else {
-                    tempEvent = minByMaxByExecutor.getResult(MaxByMinByConstants.MAX_BY);
-                }
-                // TODO: 12/15/16  use .equals() to compare two objects
-                if (tempEvent != currentEvent) {
+                if (!(tempEvent.equals(currentEvent))){
                     StreamEvent event = streamEventCloner.copyStreamEvent(tempEvent);
                     expiredEventChunk.add(event);
                     currentEvent = tempEvent;

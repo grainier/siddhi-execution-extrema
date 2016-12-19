@@ -34,6 +34,5 @@ import org.wso2.extension.siddhi.execution.extrema.util.MaxByMinByConstants;
 public class MinByTimeWindowProcessor extends MaxByMinByTimeWindowProcessor {
     public MinByTimeWindowProcessor() {
         maxByMinByType = MaxByMinByConstants.MIN_BY;
-        windowType = MaxByMinByConstants.MinByTime;
     }
 }
