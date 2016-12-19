@@ -158,7 +158,7 @@ public class MaxByLengthWindowProcessorTestCase {
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
-            inputHandler.send(new Object[]{"IBM", 700f, 99});
+            inputHandler.send(new Object[]{"IBM", 700f, 14});
             inputHandler.send(new Object[]{"IBM", 60.5f, 12});
             inputHandler.send(new Object[]{"IBM", 700f, 20});
             inputHandler.send(new Object[]{"ZZZ", 60.5f, 82});

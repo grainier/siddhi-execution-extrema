@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -60,18 +60,15 @@ public class MaxByMinByExecutor {
     /**
      * To find the event which holds minimum or maximum  value of given parameter.
      *
-     * @param functionType MIN/MAX
+     * @param minByMaxByExecutorType MIN/MAX
      * @return outputEvent
      */
-    public StreamEvent getResult(String functionType) {
+    public StreamEvent getResult(String minByMaxByExecutorType) {
         StreamEvent outputEvent;
-        if (functionType.equals(MaxByMinByConstants.MIN_BY)) {
-            //// TODO: 15/12/16 make it one line
-            Object minEventKey = sortedEventMap.firstKey();
-            outputEvent = sortedEventMap.get(minEventKey);
-        } else {
-            Object maxEventKey = sortedEventMap.lastKey();
-            outputEvent = sortedEventMap.get(maxEventKey);
+        if (minByMaxByExecutorType.equals(MaxByMinByConstants.MIN_BY))
+            outputEvent = sortedEventMap.get(sortedEventMap.firstKey());
+        else {
+            outputEvent = sortedEventMap.get(sortedEventMap.lastKey());
         }
         return outputEvent;
     }
@@ -86,7 +83,7 @@ public class MaxByMinByExecutor {
      */
 
     public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
-            ExpressionExecutor minByAttribute) {
+                                                        ExpressionExecutor minByAttribute) {
         StreamEvent minEvent = oldEvent;
         if (minEvent != null) {
             Object minEventValue = minByAttribute.execute(minEvent);
@@ -114,7 +111,7 @@ public class MaxByMinByExecutor {
      * @return maxEvent
      */
     public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
-            ExpressionExecutor maxByAttribute) {
+                                                        ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
             Object maxEventValue = maxByAttribute.execute(maxEvent);
