@@ -28,7 +28,7 @@ import java.util.TreeMap;
  * class which has the logic implementation to get the event which hold min/max value corresponding to given attribute
  */
 public class MaxByMinByExecutor {
-    private String minByMaxByExecutorType;
+
     private TreeMap<Object, StreamEvent> sortedEventMap = new TreeMap<Object, StreamEvent>();
 
     public TreeMap<Object, StreamEvent> getSortedEventMap() {
@@ -39,13 +39,6 @@ public class MaxByMinByExecutor {
         this.sortedEventMap = sortedEventMap;
     }
 
-    public String getMinByMaxByExecutorType() {
-        return minByMaxByExecutorType;
-    }
-
-    public void setMinByMaxByExecutorType(String minByMaxByExecutorType) {
-        this.minByMaxByExecutorType = minByMaxByExecutorType;
-    }
 
     /**
      * To insert the current event into treemap .
@@ -63,9 +56,9 @@ public class MaxByMinByExecutor {
      * @param minByMaxByExecutorType MIN/MAX
      * @return outputEvent
      */
-    public StreamEvent getResult(Constants.Type functionType) {
+    public StreamEvent getResult(Constants.Type minByMaxByExecutorType) {
         StreamEvent outputEvent;
-        if (functionType.equals(Constants.Type.MIN_BY)) {
+        if (minByMaxByExecutorType.equals(Constants.Type.MIN_BY)) {
             outputEvent = sortedEventMap.get(sortedEventMap.firstKey());
         } else {
             outputEvent = sortedEventMap.get(sortedEventMap.lastKey());

@@ -37,6 +37,5 @@ import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 public class MaxByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
     public MaxByLengthWindowProcessor() {
         super.minByMaxByExecutorType = Constants.MAX_BY;
-        super.minByMaxByExtensionType = Constants.MaxByLength;
     }
 }
