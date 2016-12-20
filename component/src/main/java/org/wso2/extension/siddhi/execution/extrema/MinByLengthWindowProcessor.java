@@ -33,10 +33,7 @@ import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 * According to the given attribute it will give event which holds the minimum value.
 * */
 public class MinByLengthWindowProcessor extends MaxByMinByLengthWindowProcessor {
-
     public MinByLengthWindowProcessor() {
         super.minByMaxByExecutorType = Constants.MIN_BY;
-        super.minByMaxByExtensionType = Constants.MinByLength;
     }
-
 }

@@ -35,7 +35,6 @@ import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 public class MinByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindowProcessor {
     public MinByLengthBatchWindowProcessor() {
         super.minByMaxByExecutorType = Constants.MIN_BY;
-//        super.minByMaxByExtensionType = Constants.MinByLengthBatch;
     }
 
 }

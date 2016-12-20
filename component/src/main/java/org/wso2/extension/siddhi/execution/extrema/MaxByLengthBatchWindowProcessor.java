@@ -38,7 +38,6 @@ public class MaxByLengthBatchWindowProcessor extends MaxByMinByLengthBatchWindow
 
     public MaxByLengthBatchWindowProcessor() {
         super.minByMaxByExecutorType = Constants.MAX_BY;
-//        super.minByMaxByExtensionType = Constants.MaxByLengthBatch;
     }
 
 }
