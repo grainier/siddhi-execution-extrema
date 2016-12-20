@@ -55,7 +55,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
     /*
      * minByMaxByExecutorType holds the value to indicate MIN or MAX
      */
-    protected String minByMaxByExecutorType;
+    protected Constants.Type minByMaxByExecutorType;
 
     /*
     minByMaxByExecutor used to get extrema event
@@ -86,12 +86,6 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
         this.executionPlanContext = executionPlanContext;
         this.expiredEventChunk = new ComplexEventChunk<StreamEvent>(false);
         maxByMinByExecutor = new MaxByMinByExecutor();
-
-        if (minByMaxByExecutorType.equals(Constants.MIN_BY)) {
-            maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        } else {
-            maxByMinByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
-        }
 
         if (attributeExpressionExecutors.length != 2) {
             throw new ExecutionPlanValidationException(
@@ -167,7 +161,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                     count++;
 
                     //get the output event
-                    this.outputStreamEvent = maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType());
+                    this.outputStreamEvent = maxByMinByExecutor.getResult(minByMaxByExecutorType);
 
                     if (expiredEvent != null) {
                         if (outputStreamEvent.equals(expiredEvent)) {
@@ -179,7 +173,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
                     outputStreamEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
                     //add the event which is to be expired
-                    // TODO: 15/12/16 change ex chunk to find mthod
+
                     expiredEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
                     expiredEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
 
@@ -201,7 +195,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                         events.remove(0);
 
                         //get the output event
-                        this.outputStreamEvent = maxByMinByExecutor.getResult(maxByMinByExecutor.getMinByMaxByExecutorType());
+                        this.outputStreamEvent = maxByMinByExecutor.getResult(minByMaxByExecutorType);
                         if (expiredEvent != null) {
                             if (outputStreamEvent != expiredEvent) {
                                 expiredEvent.setTimestamp(currentTime);
@@ -213,8 +207,6 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                         outputStreamEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
                         expiredEventChunk.add(streamEventCloner.copyStreamEvent(streamEventCloner.copyStreamEvent(outputStreamEvent)));
                         expiredEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
-
-                        //                        System.out.println(outputStreamEventChunk);
                         if (outputStreamEventChunk.getFirst() != null) {
                             streamEventChunks.add(outputStreamEventChunk);
                         }
