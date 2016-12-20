@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -98,9 +98,9 @@ public class MaxByLengthWindowProcessorTestCase {
         String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
-//        results.add(new Object[]{"IBM", 700f, 14});
-//        results.add(new Object[]{"IBM", 700f, 14});
-//        results.add(new Object[]{"WSO2", 790f, 1});
+        results.add(new Object[]{"IBM", 700f, 14});
+        results.add(new Object[]{"IBM", 700f, 14});
+        results.add(new Object[]{"WSO2", 790f, 1});
         try {
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
@@ -158,7 +158,7 @@ public class MaxByLengthWindowProcessorTestCase {
             });
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
             executionPlanRuntime.start();
-            inputHandler.send(new Object[]{"IBM", 700f, 99});
+            inputHandler.send(new Object[]{"IBM", 700f, 14});
             inputHandler.send(new Object[]{"IBM", 60.5f, 12});
             inputHandler.send(new Object[]{"IBM", 700f, 20});
             inputHandler.send(new Object[]{"ZZZ", 60.5f, 82});

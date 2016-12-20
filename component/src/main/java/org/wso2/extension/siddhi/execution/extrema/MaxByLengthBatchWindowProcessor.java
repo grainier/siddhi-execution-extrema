@@ -22,13 +22,13 @@ import org.wso2.extension.siddhi.execution.extrema.util.Constants;
 
 /**
  * This class is a window processor maxByLengthBatch extension
- *
+ * <p>
  * Sample Query:
- *
+ * <p>
  * from inputStream#window.minbymaxby:maxByLengthBatch(attribute1, 4)
  * select attribute1, attribute2
  * insert into outputStream;
- *
+ * <p>
  * Description:
  * In the example query given, 4 is the number of events the window should tumble and attribute1 is the attribute
  * that need to be compared to find the event which has max value.

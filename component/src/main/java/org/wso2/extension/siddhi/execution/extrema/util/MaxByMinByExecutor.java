@@ -60,7 +60,7 @@ public class MaxByMinByExecutor {
     /**
      * To find the event which holds minimum or maximum  value of given parameter.
      *
-     * @param functionType MIN/MAX
+     * @param minByMaxByExecutorType MIN/MAX
      * @return outputEvent
      */
     public StreamEvent getResult(Constants.Type functionType) {
@@ -83,7 +83,7 @@ public class MaxByMinByExecutor {
      */
 
     public static StreamEvent getMinEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
-            ExpressionExecutor minByAttribute) {
+                                                        ExpressionExecutor minByAttribute) {
         StreamEvent minEvent = oldEvent;
         if (minEvent != null) {
             Object minEventValue = minByAttribute.execute(minEvent);
@@ -111,7 +111,7 @@ public class MaxByMinByExecutor {
      * @return maxEvent
      */
     public static StreamEvent getMaxEventBatchProcessor(StreamEvent currentEvent, StreamEvent oldEvent,
-            ExpressionExecutor maxByAttribute) {
+                                                        ExpressionExecutor maxByAttribute) {
         StreamEvent maxEvent = oldEvent;
         if (maxEvent != null) {
             Object maxEventValue = maxByAttribute.execute(maxEvent);
