@@ -57,7 +57,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /*
      * minByMaxByExecutorType holds the value to indicate MIN or MAX
      */
-    protected String minByMaxByExecutorType;
+    protected Constants.Type minByMaxByExecutorType;
     /*
     Attribute which is used to find Extrema event
      */
@@ -76,7 +76,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     /*
     Represents current extrema event
      */
-    private StreamEvent currentevent;
+    private StreamEvent currentEvent;
     private StreamEvent expiredResultEvent;
     private StreamEvent resetEvent;
 
@@ -91,8 +91,6 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
 
         this.executionPlanContext = executionPlanContext;
         minByMaxByExecutor = new MaxByMinByExecutor();
-
-        minByMaxByExecutor.setMinByMaxByExecutorType(minByMaxByExecutorType);
 
 
         if (attributeExpressionExecutors.length != 2) {
@@ -163,13 +161,13 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                 //Get the event which hold the minimum or maximum event
 
                 if (minByMaxByExecutorType.equals(Constants.MAX_BY)) {
-                    resultEvent = MaxByMinByExecutor
+                    this.currentEvent = MaxByMinByExecutor
                             .getMaxEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
-                    oldEvent = resultEvent;
+                    oldEvent = this.currentEvent;
                 } else if (minByMaxByExecutorType.equals(Constants.MIN_BY)) {
-                    resultEvent = MaxByMinByExecutor
+                    this.currentEvent = MaxByMinByExecutor
                             .getMinEventBatchProcessor(currentEvent, oldEvent, minByMaxByExecutorAttribute);
-                    oldEvent = currentevent;
+                    oldEvent = this.currentEvent;
                 }
 
                 count++;
@@ -180,21 +178,18 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                         outputStreamEventChunk.add(expiredResultEvent);
                         outputStreamEventChunk.add(resetEvent);
                     }
-                    outputStreamEventChunk.add(currentevent);
-                    expiredResultEvent = streamEventCloner.copyStreamEvent(currentevent);
+                    outputStreamEventChunk.add(this.currentEvent);
+                    expiredResultEvent = streamEventCloner.copyStreamEvent(this.currentEvent);
                     expiredResultEvent.setType(StreamEvent.Type.EXPIRED);
-                    // TODO: 15/12/16 create the chunk within find method 
-                    expiredEventChunk.add(expiredResultEvent);
-                    resetEvent = streamEventCloner.copyStreamEvent(currentevent);
-                    resetEvent.setType(StateEvent.Type.RESET);
-                    System.out.println(outputStreamEventChunk);
 
+                    expiredEventChunk.add(expiredResultEvent);
+                    resetEvent = streamEventCloner.copyStreamEvent(this.currentEvent);
+                    resetEvent.setType(StateEvent.Type.RESET);
                     count = 0;
                     if (outputStreamEventChunk.getFirst() != null) {
                         streamEventChunks.add(outputStreamEventChunk);
                     }
                 }
-
             }
         }
         for (ComplexEventChunk<StreamEvent> outputStreamEventChunk : streamEventChunks) {
@@ -232,10 +227,10 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     @Override
     public Object[] currentState() {
         if (this.expiredResultEvent != null)
-            return new Object[]{this.currentevent, this.expiredResultEvent, Integer.valueOf(this.count),
+            return new Object[]{this.currentEvent, this.expiredResultEvent, Integer.valueOf(this.count),
                     this.resetEvent};
         else {
-            return new Object[]{this.currentevent, Integer.valueOf(this.count), this.resetEvent};
+            return new Object[]{this.currentEvent, Integer.valueOf(this.count), this.resetEvent};
         }
     }
 
@@ -249,12 +244,12 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
     @Override
     public void restoreState(Object[] state) {
         if (state.length > 3) {
-            this.currentevent = (StreamEvent) state[0];
+            this.currentEvent = (StreamEvent) state[0];
             this.expiredResultEvent = (StreamEvent) state[1];
             this.count = (Integer) state[2];
             this.resetEvent = (StreamEvent) state[3];
         } else {
-            this.currentevent = (StreamEvent) state[0];
+            this.currentEvent = (StreamEvent) state[0];
             this.count = (Integer) state[2];
             this.resetEvent = (StreamEvent) state[3];
         }
