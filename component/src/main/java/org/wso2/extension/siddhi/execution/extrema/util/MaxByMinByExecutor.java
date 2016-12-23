@@ -47,7 +47,9 @@ public class MaxByMinByExecutor {
      * @param parameterValue    key for the treemap(object which holds the parameter value)
      */
     public void insert(StreamEvent clonedStreamEvent, Object parameterValue) {
-        sortedEventMap.put(parameterValue, clonedStreamEvent);
+        if (!( sortedEventMap.containsKey(parameterValue))){
+            sortedEventMap.put(parameterValue, clonedStreamEvent);
+        }
     }
 
     /**
@@ -70,7 +72,7 @@ public class MaxByMinByExecutor {
      * Return the minimum event comparing two events
      *
      * @param currentEvent   new event
-     * @param oldEvent       the previous event that is stored as the minimun event
+     * @param oldEvent       the previous event that is stored as the minimum event
      * @param minByAttribute the attribute which the comparison is done.
      * @return minEvent
      */
@@ -85,7 +87,7 @@ public class MaxByMinByExecutor {
                 // TODO: 15/12/16  no need to cast to comparable
                 Comparable minValue = (Comparable) minEventValue;
                 Comparable currentValue = (Comparable) currentEventValue;
-                if (currentValue.compareTo(minValue) <= 0) {
+                if (currentValue.compareTo(minValue) < 0) {
                     minEvent = currentEvent;
                 }
             }
@@ -112,7 +114,7 @@ public class MaxByMinByExecutor {
             if (maxEventValue instanceof Comparable && currentEventValue instanceof Comparable) {
                 Comparable maxValue = (Comparable) maxEventValue;
                 Comparable currentValue = (Comparable) currentEventValue;
-                if (currentValue.compareTo(maxValue) >= 0) {
+                if (currentValue.compareTo(maxValue) > 0) {
                     maxEvent = currentEvent;
                 }
             }

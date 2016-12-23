@@ -35,6 +35,7 @@ public class MinByTimeBatchWindowTestCase {
     private int inEventCount;
     private int removeEventCount;
     private boolean eventArrived;
+    private static final Logger log = Logger.getLogger(MinByTimeBatchWindowTestCase.class);
 
     @Before
     public void init() {
@@ -47,7 +48,7 @@ public class MinByTimeBatchWindowTestCase {
      */
     @Test
     public void minbyTimeBatchWindowTest1() throws InterruptedException {
-
+        log.info("MinByTimeBatchWindowProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -88,15 +89,14 @@ public class MinByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"IBM", 90f, 5});
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(1100);
-        System.out.println();
-        Thread.sleep(1100);
         Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(0, removeEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
     }
     @Test
     public void minbyTimeBatchWindowTest2() throws InterruptedException {
-
+        log.info("MinByTimeBatchWindowProcessor TestCase 2");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -137,11 +137,14 @@ public class MinByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(0, inEventCount);
+        Assert.assertEquals(3, removeEventCount);
+        Assert.assertTrue(eventArrived);
     }
 
     @Test
     public void minbyTimeBatchWindowTest3() throws InterruptedException {
-
+        log.info("MinByTimeBatchWindowProcessor TestCase 3");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -158,6 +161,13 @@ public class MinByTimeBatchWindowTestCase {
             @Override
             public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
                 EventPrinter.print(timeStamp , inEvents , removeEvents);
+                if (inEvents != null) {
+                    inEventCount = inEventCount + inEvents.length;
+                }
+                if (removeEvents != null) {
+                    removeEventCount = removeEventCount + removeEvents.length;
+                }
+                eventArrived = true;
             }
         });
 
@@ -175,10 +185,14 @@ public class MinByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(3, removeEventCount);
+        Assert.assertTrue(eventArrived);
     }
 
     @Test
     public void minbyTimeBatchWindowTest4() throws InterruptedException {
+        log.info("MinByTimeBatchWindowProcessor TestCase 4");
         SiddhiManager siddhiManager = new SiddhiManager();
         String streams = "" +
                 "define stream cseEventStream (symbol string, price float, volume int); " +
@@ -211,12 +225,16 @@ public class MinByTimeBatchWindowTestCase {
             cseEventStreamHandler.send(new Object[]{"WSO2", 55.6f, 100});
             twitterStreamHandler.send(new Object[]{"User1", "Hello World", "WSO2"});
             cseEventStreamHandler.send(new Object[]{"IBM", 75.6f, 100});
-            Thread.sleep(1500);
-//            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            Thread.sleep(2000);
+            cseEventStreamHandler.send(new Object[]{"MIT", 57.6f, 100});
+            cseEventStreamHandler.send(new Object[]{"WSO2", 57.6f, 100});
+            twitterStreamHandler.send(new Object[]{"User2", "Hello", "WSO2"});
+            twitterStreamHandler.send(new Object[]{"User3", "Hi", "MIT"});
             Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
+            Assert.assertEquals(2,inEventCount);
             Assert.assertEquals(0, removeEventCount);
-//            Assert.assertTrue(eventArrived);
+            Assert.assertTrue(eventArrived);
         } finally {
             executionPlanRuntime.shutdown();
         }
@@ -225,6 +243,7 @@ public class MinByTimeBatchWindowTestCase {
 
     @Test
     public void minbyTimeBatchWindowTest5() throws InterruptedException {
+        log.info("MinByTimeBatchWindowProcessor TestCase 5");
         SiddhiManager siddhiManager = new SiddhiManager();
         String streams = "" +
                 "define stream cseEventStream (symbol string, price float, volume int); " +
@@ -273,8 +292,9 @@ public class MinByTimeBatchWindowTestCase {
             cseEventStreamHandler.send(new Object[]{"WSO2", 7.6f, 100});
             Thread.sleep(1000);
             //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
+            Assert.assertEquals(2, inEventCount);
             Assert.assertEquals(0, removeEventCount);
-//            Assert.assertTrue(eventArrived);
+            Assert.assertTrue(eventArrived);
         } finally {
             executionPlanRuntime.shutdown();
         }

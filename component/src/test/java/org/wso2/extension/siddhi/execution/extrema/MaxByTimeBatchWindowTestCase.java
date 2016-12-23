@@ -20,6 +20,7 @@
 package org.wso2.extension.siddhi.execution.extrema;
 
 import junit.framework.Assert;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
@@ -34,6 +35,7 @@ public class MaxByTimeBatchWindowTestCase {
     private int inEventCount;
     private int removeEventCount;
     private boolean eventArrived;
+    private static final Logger log = Logger.getLogger(MaxByTimeBatchWindowTestCase.class);
 
     @Before
     public void init() {
@@ -46,7 +48,7 @@ public class MaxByTimeBatchWindowTestCase {
      */
     @Test
     public void maxbyTimeBatchWindowTest1() throws InterruptedException {
-
+        log.info("MaxByTimeBatchWindowProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -55,7 +57,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "@info(name = 'query1') " +
                 "from cseEventStream#window.extrema:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
-                "insert into outputStream ;";
+                "insert all events into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 
@@ -89,12 +91,12 @@ public class MaxByTimeBatchWindowTestCase {
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();;
         Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(3, removeEventCount);
         Assert.assertTrue(eventArrived);
-        executionPlanRuntime.shutdown();
     }
     @Test
     public void maxbyTimeBatchWindowTest2() throws InterruptedException {
-    //// TODO: 15/12/16  add logs 
+        log.info("MaxByTimeBatchWindowProcessor TestCase 2");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -111,6 +113,13 @@ public class MaxByTimeBatchWindowTestCase {
                     @Override
                     public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
                         EventPrinter.print(timeStamp , inEvents , removeEvents);
+                        if (inEvents != null) {
+                            inEventCount = inEventCount + inEvents.length;
+                        }
+                        if (removeEvents != null) {
+                            removeEventCount = removeEventCount + removeEvents.length;
+                        }
+                        eventArrived = true;
                     }
                 });
 
@@ -119,9 +128,7 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"IBM", 700f, 1});
         inputHandler.send(new Object[]{"WSO2", 888f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 1});
-        Thread.sleep(1100);
-        Thread.sleep(1100);
-        Thread.sleep(1100);
+        Thread.sleep(2200);
         inputHandler.send(new Object[]{"WSO2", 60.5f, 2});
         inputHandler.send(new Object[]{"IBM", 777f, 3});
         inputHandler.send(new Object[]{"WSO2", 234.5f, 4});
@@ -130,11 +137,14 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(3, removeEventCount);
+        Assert.assertTrue(eventArrived);
     }
 
     @Test
     public void maxbyTimeBatchWindowTest3() throws InterruptedException {
-
+        log.info("MaxByTimeBatchWindowProcessor TestCase 3");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream =
@@ -143,7 +153,7 @@ public class MaxByTimeBatchWindowTestCase {
                 "@info(name = 'query2') " +
                 "from cseEventStream#window.extrema:maxbytimebatch(price,1 sec) " +
                 "select symbol, price " +
-                "insert all events into outputStream ;";
+                "insert into outputStream ;";
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
 
@@ -151,6 +161,13 @@ public class MaxByTimeBatchWindowTestCase {
             @Override
             public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
                 EventPrinter.print(timeStamp , inEvents , removeEvents);
+                if (inEvents != null) {
+                    inEventCount = inEventCount + inEvents.length;
+                }
+                if (removeEvents != null) {
+                    removeEventCount = removeEventCount + removeEvents.length;
+                }
+                eventArrived = true;
             }
         });
 
@@ -168,6 +185,9 @@ public class MaxByTimeBatchWindowTestCase {
         inputHandler.send(new Object[]{"WSO2", 765f, 6});
         Thread.sleep(2000);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(0, removeEventCount);
+        Assert.assertTrue(eventArrived);
     }
 }
 

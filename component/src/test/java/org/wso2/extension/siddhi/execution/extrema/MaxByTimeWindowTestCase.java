@@ -19,6 +19,7 @@
 
 package org.wso2.extension.siddhi.execution.extrema;
 
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,8 @@ public class MaxByTimeWindowTestCase {
     private int inEventCount;
     private int removeEventCount;
     private boolean eventArrived;
+    private static final Logger log = Logger.getLogger(MaxByTimeWindowTestCase.class);
+
 
     @Before
     public void init() {
@@ -48,7 +51,7 @@ public class MaxByTimeWindowTestCase {
 
     @Test
     public void maxbyTimeWindowTest1() throws InterruptedException {
-
+        log.info("MaxByTimeWindowProcessor TestCase 1");
         SiddhiManager siddhiManager = new SiddhiManager();
 
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
@@ -81,7 +84,7 @@ public class MaxByTimeWindowTestCase {
         Thread.sleep(1100);
         inputHandler.send(new Object[]{"IBM", 60.50f, 6});
         inputHandler.send(new Object[]{"AAA", 600.5f, 7});
-        Thread.sleep(500);
+        Thread.sleep(2200);
         Assert.assertEquals(4, inEventCount);
         Assert.assertEquals(0,removeEventCount);
         Assert.assertTrue(eventArrived);
@@ -90,7 +93,7 @@ public class MaxByTimeWindowTestCase {
 
     @Test
     public void maxbyTimeWindowTest2() throws InterruptedException {
-
+        log.info("MaxByTimeWindowProcessor TestCase 2");
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxbytime(price, 1 sec) select symbol,price," +
@@ -113,11 +116,11 @@ public class MaxByTimeWindowTestCase {
         });
         InputHandler inputHandler = executionPlanRuntime.getInputHandler("cseEventStream");
         executionPlanRuntime.start();
-        inputHandler.send(new Object[]{"IBM", 700f, 1});
+        inputHandler.send(new Object[]{"IBM", 500f, 1});
         inputHandler.send(new Object[]{"MIT", 700f, 2});
         inputHandler.send(new Object[]{"WSO2", 700f, 3});
         Thread.sleep(1100);
-        Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(2, inEventCount);
         Assert.assertEquals(0,removeEventCount);
         Assert.assertTrue(eventArrived);
         executionPlanRuntime.shutdown();
@@ -125,9 +128,8 @@ public class MaxByTimeWindowTestCase {
 
     @Test
     public void maxbyTimeWindowTest3() throws InterruptedException {
-
+        log.info("MaxByTimeWindowProcessor TestCase 3");
         SiddhiManager siddhiManager = new SiddhiManager();
-
         String cseEventStream = "" +
                 "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "" +
@@ -169,11 +171,12 @@ public class MaxByTimeWindowTestCase {
         executionPlanRuntime.shutdown();
         Assert.assertEquals(5,inEventCount);
         Assert.assertEquals(0, removeEventCount);
+        Assert.assertTrue(eventArrived);
 
     }
     @Test
     public void maxbyTimeWindowTest4() throws InterruptedException {
-
+        log.info("MaxByTimeWindowProcessor TestCase 4");
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxbytime(price, 1 sec) select symbol,price," +
@@ -206,11 +209,14 @@ public class MaxByTimeWindowTestCase {
         inputHandler.send(new Object[]{"YAHOO", 432f, 8});
         Thread.sleep(1100);
         executionPlanRuntime.shutdown();
+        Assert.assertEquals(0,inEventCount);
+        Assert.assertEquals(4, removeEventCount);
+        Assert.assertTrue(eventArrived);
     }
 
     @Test
-    public void maxbyTimeWindowTest6() throws InterruptedException {
-
+    public void maxbyTimeWindowTest5() throws InterruptedException {
+        log.info("MaxByTimeWindowProcessor TestCase 5");
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
         String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxbytime(price, 1 sec) select symbol,price," +
@@ -246,8 +252,8 @@ public class MaxByTimeWindowTestCase {
         inputHandler.send(new Object[]{"YAHOO", 32f, 8});
         Thread.sleep(1100);
         executionPlanRuntime.shutdown();
-        Assert.assertEquals(4, inEventCount);
-        Assert.assertEquals(4, removeEventCount);
+        Assert.assertEquals(3, inEventCount);
+        Assert.assertEquals(3, removeEventCount);
     }
 
 
