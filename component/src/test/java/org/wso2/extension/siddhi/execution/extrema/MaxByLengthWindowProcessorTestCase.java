@@ -51,8 +51,8 @@ public class MaxByLengthWindowProcessorTestCase {
 
 
     @Test
-    public void testMaxByLengthWindowProcessor1() throws InterruptedException {
-        log.info("Testing maxByLengthWindowProcessor with no of events less than window size for float type parameter");
+    public void testMaxByLengthWindowProcessor0() throws InterruptedException {
+        log.info("Test maxByLengthWindowProcessor with no of events less than window size for float type parameter");
         SiddhiManager siddhiManager = new SiddhiManager();
 
 
@@ -61,16 +61,13 @@ public class MaxByLengthWindowProcessorTestCase {
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
         results.add(new Object[]{"IBM", 700f, 14});
-        results.add(new Object[]{"IBM", 700f, 14});
         results.add(new Object[]{"WSO2", 790f, 1});
         try {
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
                 @Override
                 public void receive(Event[] events) {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
-
                     for (Event event : events) {
                         assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
@@ -89,8 +86,8 @@ public class MaxByLengthWindowProcessorTestCase {
     }
 
     @Test
-    public void testMaxByLengthWindowProcessor10() throws InterruptedException {
-        log.info("Testing maxByLengthWindowProcessor with no of events less than window size for float type parameter");
+    public void testMaxByLengthWindowProcessor1() throws InterruptedException {
+        log.info("Test maxByLengthWindowProcessor with no of events less than window size for float type parameter");
         SiddhiManager siddhiManager = new SiddhiManager();
 
 
@@ -98,17 +95,14 @@ public class MaxByLengthWindowProcessorTestCase {
         String query = "@info(name = 'query1') from cseEventStream#window.extrema:maxByLength(price, 4) select symbol,price," +
                 "volume insert into outputStream ;";
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(cseEventStream + query);
-        results.add(new Object[]{"IBM", 700f, 14});
-        results.add(new Object[]{"IBM", 700f, 14});
-        results.add(new Object[]{"WSO2", 790f, 1});
+        results.add(new Object[]{"IBM", 88f, 14});
+        results.add(new Object[]{"WSO2", 100f, 1});
         try {
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
                 @Override
                 public void receive(Event[] events) {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
-
                     for (Event event : events) {
                         //  assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
@@ -132,7 +126,7 @@ public class MaxByLengthWindowProcessorTestCase {
 
     @Test
     public void testMaxByLengthWindowProcessor2() throws InterruptedException {
-        log.info("Testing maxByLengthWindowProcessor with no of events equal to window size for integer type parameter");
+        log.info("Test maxByLengthWindowProcessor with no of events equal to window size for integer type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
@@ -142,8 +136,6 @@ public class MaxByLengthWindowProcessorTestCase {
         try {
             final List<Object> results = new ArrayList<Object>();
             results.add(new Object[]{"IBM", 700f, 14});
-            results.add(new Object[]{"IBM", 700f, 14});
-            results.add(new Object[]{"IBM", 700f, 20});
             results.add(new Object[]{"ZZZ", 60.5f, 82});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
                 @Override
@@ -160,7 +152,7 @@ public class MaxByLengthWindowProcessorTestCase {
             executionPlanRuntime.start();
             inputHandler.send(new Object[]{"IBM", 700f, 14});
             inputHandler.send(new Object[]{"IBM", 60.5f, 12});
-            inputHandler.send(new Object[]{"IBM", 700f, 20});
+            inputHandler.send(new Object[]{"WSO2", 700f, 14});
             inputHandler.send(new Object[]{"ZZZ", 60.5f, 82});
             Thread.sleep(1000);
         } finally {
@@ -171,7 +163,7 @@ public class MaxByLengthWindowProcessorTestCase {
 
     @Test
     public void testMaxByLengthWindowProcessor3() throws InterruptedException {
-        log.info("Testing maxByLengthWindowProcessor with no of events greater than window size for String type parameter");
+        log.info("Test maxByLengthWindowProcessor with no of events greater than window size for String type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
@@ -181,13 +173,7 @@ public class MaxByLengthWindowProcessorTestCase {
         try {
             final List<Object> results = new ArrayList<Object>();
             results.add(new Object[]{"bbc", 700f, 14});
-            results.add(new Object[]{"bbc", 700f, 14});
             results.add(new Object[]{"xxx", 700f, 2});
-            results.add(new Object[]{"xxx", 700f, 2});
-            results.add(new Object[]{"xxx", 700f, 2});
-            results.add(new Object[]{"zzz", 60.5f, 12});
-            results.add(new Object[]{"zzz", 60.5f, 12});
-            results.add(new Object[]{"zzz", 60.5f, 12});
             results.add(new Object[]{"zzz", 60.5f, 12});
             results.add(new Object[]{"rye", 60.5f, 82});
 
@@ -239,6 +225,9 @@ public class MaxByLengthWindowProcessorTestCase {
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
             final List<Object> results = new ArrayList<Object>();
+            results.add(new Object[]{"WSO2", "Hello World", 700.0f, 43});
+            results.add(new Object[]{"WSO2", "Hello SIDDHI", 700.0f, 45});
+            results.add(new Object[]{"WSO2", "Hello SIDDHI", 60.5f, 45});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
                 @Override
@@ -246,6 +235,10 @@ public class MaxByLengthWindowProcessorTestCase {
 
                     System.out.print("output event: ");
                     EventPrinter.print(events);
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -285,16 +278,12 @@ public class MaxByLengthWindowProcessorTestCase {
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
-            final List<Object> results = new ArrayList<Object>();
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
                 @Override
                 public void receive(Event[] events) {
 
                     System.out.print("output event: ");
-//                    if(events==null){
-//                        System.out.println("There is no output events");
-//                    }
                     EventPrinter.print(events);
 
                 }
@@ -332,7 +321,7 @@ public class MaxByLengthWindowProcessorTestCase {
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert events into outputStream ;";
-
+        results.add(new Object[]{"WSO2", "Hello SIDDHI", 900f});
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
 
@@ -340,6 +329,10 @@ public class MaxByLengthWindowProcessorTestCase {
                 @Override
                 public void receive(long l, Event[] events, Event[] events1) {
                     EventPrinter.print(l, events, events1);
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -348,14 +341,10 @@ public class MaxByLengthWindowProcessorTestCase {
 
             cseEventStreamHandler.send(new Object[]{"WSO2", 700f, 14});
             cseEventStreamHandler.send(new Object[]{"ABC", 60.5f, 2});
-
             twitterStreamHandler.send(new Object[]{100, "Hello World", "XXX"});
             twitterStreamHandler.send(new Object[]{101, "Hello SIDDHI", "WSO2"});
             Thread.sleep(100);
-
-
             cseEventStreamHandler.send(new Object[]{"WSO2", 900f, 14});
-            System.out.println("------------------------------------");
             cseEventStreamHandler.send(new Object[]{"XXX", 70.5f, 2});
 
 

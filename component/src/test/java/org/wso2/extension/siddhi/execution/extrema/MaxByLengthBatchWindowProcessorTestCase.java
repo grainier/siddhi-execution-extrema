@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
+import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
@@ -64,7 +65,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 public void receive(Event[] events) {
                     System.out.print("output event: ");
                     EventPrinter.print(events);
-                    Object[] results = new Object[]{"dg", 900f, 24};
+                    Object[] results = new Object[]{"WSO2", 900f, 1};
                     assertArrayEquals(results, events[0].getData());
 
                 }
@@ -73,8 +74,8 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             executionPlanRuntime.start();
             inputHandler.send(new Object[]{"IBM", 700f, 14});
             inputHandler.send(new Object[]{"IBM", 40.5f, 2});
-            inputHandler.send(new Object[]{"et", 900f, 1});
-            inputHandler.send(new Object[]{"dg", 900f, 24});
+            inputHandler.send(new Object[]{"WSO2", 900f, 1});
+            inputHandler.send(new Object[]{"TELCO", 900f, 24});
 
             Thread.sleep(1000);
 
@@ -95,16 +96,14 @@ public class MaxByLengthBatchWindowProcessorTestCase {
         try {
             final List<Object> results = new ArrayList<Object>();
             results.add(new Object[]{"IBM", 700f, 142});
-            results.add(new Object[]{"dg", 60.5f, 24});
+            results.add(new Object[]{"WSO2", 60.5f, 24});
 
-            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-
+            executionPlanRuntime.addCallback("query1", new QueryCallback() {
                 @Override
-                public void receive(Event[] events) {
+                public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                    EventPrinter.print(timeStamp, inEvents, removeEvents);
 
-                    System.out.print("output event: ");
-                    EventPrinter.print(events);
-                    for (Event event : events) {
+                    for (Event event : inEvents) {
                         assertArrayEquals((Object[]) results.get(count), event.getData());
                         count++;
                     }
@@ -116,11 +115,11 @@ public class MaxByLengthBatchWindowProcessorTestCase {
             inputHandler.send(new Object[]{"IBM", 60.5f, 2});
             inputHandler.send(new Object[]{"IBM", 700f, 142});
             inputHandler.send(new Object[]{"IBM", 60.5f, 21});
-            inputHandler.send(new Object[]{"et", 700f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
+            inputHandler.send(new Object[]{"WSO2", 700f, 1});
+            inputHandler.send(new Object[]{"WSO2", 60.5f, 24});
             inputHandler.send(new Object[]{"IBM", 60.5f, 21});
-            inputHandler.send(new Object[]{"et", 700f, 1});
-            inputHandler.send(new Object[]{"dg", 60.5f, 24});
+            inputHandler.send(new Object[]{"IBM", 700f, 1});
+            inputHandler.send(new Object[]{"WSO2", 60.5f, 24});
             Thread.sleep(1000);
 
         } finally {
@@ -195,6 +194,8 @@ public class MaxByLengthBatchWindowProcessorTestCase {
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
             final List<Object> results = new ArrayList<Object>();
+            results.add(new Object[]{"WSO2", "Hello SIDDHI", 700f, 56});
+            results.add(new Object[]{"WSO2", "Hello SIDDHI", 60.5f, 56});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
                 @Override
@@ -202,6 +203,10 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
                     System.out.print("output event: ");
                     EventPrinter.print(events);
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -242,6 +247,7 @@ public class MaxByLengthBatchWindowProcessorTestCase {
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
             final List<Object> results = new ArrayList<Object>();
+            results.add(new Object[]{"WSO2", "Hello SIDDHI", 700f});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
 
                 @Override
@@ -249,6 +255,10 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
                     System.out.print("output event: ");
                     EventPrinter.print(events);
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
                 }
             });
             InputHandler cseEventStreamHandler = executionPlanRuntime.getInputHandler("cseEventStream");
@@ -286,7 +296,9 @@ public class MaxByLengthBatchWindowProcessorTestCase {
                 "on cseEventStream.symbol== twitterStream.company " +
                 "select cseEventStream.symbol as symbol, twitterStream.tweet, cseEventStream.price " +
                 "insert events into outputStream ;";
-
+        final List<Object> results = new ArrayList<Object>();
+        results.add(new Object[]{"WSO2", "Hello SIDDHI", 700f});
+        results.add(new Object[]{"WSO2", "Hello SIDDHI", 900f});
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(streams + query);
         try {
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
@@ -296,6 +308,10 @@ public class MaxByLengthBatchWindowProcessorTestCase {
 
                     System.out.print("output event: ");
                     EventPrinter.print(events);
+                    for (Event event : events) {
+                        assertArrayEquals((Object[]) results.get(count), event.getData());
+                        count++;
+                    }
 
                 }
             });

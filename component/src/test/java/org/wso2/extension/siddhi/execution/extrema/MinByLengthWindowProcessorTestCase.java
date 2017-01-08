@@ -52,7 +52,7 @@ public class MinByLengthWindowProcessorTestCase {
 
     @Test
     public void testMinByLengthWindowProcessor1() throws InterruptedException {
-        log.info("Testing minByLengthWindowProcessor with no of events less than window size for float type parameter");
+        log.info("Test minByLengthWindowProcessor with no of events less than window size for float type parameter");
         SiddhiManager siddhiManager = new SiddhiManager();
 
 
@@ -90,7 +90,7 @@ public class MinByLengthWindowProcessorTestCase {
 
     @Test
     public void testMinByLengthWindowProcessor2() throws InterruptedException {
-        log.info("Testing minByLengthWindowProcessor with no of events equal to window size for integer type parameter");
+        log.info("Test minByLengthWindowProcessor with no of events equal to window size for integer type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
@@ -101,7 +101,6 @@ public class MinByLengthWindowProcessorTestCase {
             final List<Object> results = new ArrayList<Object>();
             results.add(new Object[]{"IBM", 700f, 14});
             results.add(new Object[]{"IBM", 60.5f, 12});
-            results.add(new Object[]{"IBM", 700f, 2});
             results.add(new Object[]{"IBM", 700f, 2});
             executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
                 @Override
@@ -131,7 +130,7 @@ public class MinByLengthWindowProcessorTestCase {
 
     @Test
     public void testMinByLengthWindowProcessor3() throws InterruptedException {
-        log.info("Testing minByLengthWindowProcessor with no of events greater than window size for String type parameter");
+        log.info("Test minByLengthWindowProcessor with no of events greater than window size for String type parameter");
 
         SiddhiManager siddhiManager = new SiddhiManager();
         String cseEventStream = "define stream cseEventStream (symbol string, price float, volume int);";
@@ -142,12 +141,7 @@ public class MinByLengthWindowProcessorTestCase {
             final List<Object> results = new ArrayList<Object>();
             results.add(new Object[]{"bbc", 700f, 14});
             results.add(new Object[]{"bbb", 60.5f, 12});
-            results.add(new Object[]{"bbb", 60.5f, 12});
-            results.add(new Object[]{"bbb", 60.5f, 12});
             results.add(new Object[]{"abc", 700f, 84});
-            results.add(new Object[]{"abc", 700f, 84});
-            results.add(new Object[]{"aac", 700f, 2});
-            results.add(new Object[]{"aac", 700f, 2});
             results.add(new Object[]{"aac", 700f, 2});
             results.add(new Object[]{"aaa", 60.5f, 82});
 
