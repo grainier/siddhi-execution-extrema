@@ -231,8 +231,7 @@ public class MinByTimeBatchWindowTestCase {
             twitterStreamHandler.send(new Object[]{"User2", "Hello", "WSO2"});
             twitterStreamHandler.send(new Object[]{"User3", "Hi", "MIT"});
             Thread.sleep(1000);
-            //Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
-            Assert.assertEquals(2,inEventCount);
+            Assert.assertTrue("In Events can be 1 or 2 ", inEventCount == 1 || inEventCount == 2);
             Assert.assertEquals(0, removeEventCount);
             Assert.assertTrue(eventArrived);
         } finally {
