@@ -89,7 +89,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
         if (attributeExpressionExecutors.length != 2) {
             throw new ExecutionPlanValidationException(
-                    "Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " window, "
+                    "Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " length window, "
                             + "required 2, but found " + attributeExpressionExecutors.length);
         }
 
@@ -100,7 +100,7 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                     == Attribute.Type.LONG))) {
                 throw new ExecutionPlanValidationException(
                         "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
-                                + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                                + " length window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
                                 + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
                                 + ", but found " + attributeType.toString());
             }
@@ -116,12 +116,12 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
                     && attributeExpressionExecutors[1] instanceof ConstantExpressionExecutor)) {
                 throw new ExecutionPlanValidationException(
                         "Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType
-                                + " window, " + "required " + Attribute.Type.INT +
+                                + " length window, " + "required " + Attribute.Type.INT +
                                 ", but found " + attributeType.toString() + " or second argument is not a constant");
             }
         } else {
             throw new ExecutionPlanValidationException(
-                    "LengthBatch window should have constant parameter attribute but found a dynamic attribute "
+                    "Length window should have constant parameter attribute but found a dynamic attribute "
                             + attributeExpressionExecutors[1].getClass().getCanonicalName());
         }
         minByMaxByExecutorAttribute = attributeExpressionExecutors[0];
@@ -159,30 +159,6 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
                 if (count < length) {
                     count++;
-
-                    //get the output event
-                    this.outputStreamEvent = maxByMinByExecutor.getResult(minByMaxByExecutorType);
-
-                    if (expiredEvent != null) {
-                        if (outputStreamEvent.equals(expiredEvent)) {
-                            expiredEvent.setTimestamp(currentTime);
-                            expiredEvent.setType(StateEvent.Type.EXPIRED);
-                            outputStreamEventChunk.add(expiredEvent);
-                        }
-                    }
-
-                    outputStreamEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
-                    //add the event which is to be expired
-
-                    expiredEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
-                    expiredEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
-
-                    //System.out.println(outputStreamEventChunk);
-                    if (outputStreamEventChunk.getFirst() != null) {
-                        streamEventChunks.add(outputStreamEventChunk);
-                    }
-
-                    events.add(clonedStreamEvent);
                 } else {
                     StreamEvent firstEvent = events.get(0);
                     if (firstEvent != null) {
@@ -193,31 +169,32 @@ public abstract class MaxByMinByLengthWindowProcessor extends WindowProcessor im
 
                         maxByMinByExecutor.getSortedEventMap().remove(expiredEventAttributeValue);
                         events.remove(0);
-
-                        //get the output event
-                        this.outputStreamEvent = maxByMinByExecutor.getResult(minByMaxByExecutorType);
-                        if (expiredEvent != null) {
-                            if (outputStreamEvent != expiredEvent) {
-                                expiredEvent.setTimestamp(currentTime);
-                                expiredEvent.setType(StateEvent.Type.EXPIRED);
-                                outputStreamEventChunk.add(expiredEvent);
-                            }
-
-                        }
-                        outputStreamEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
-                        expiredEventChunk.add(streamEventCloner.copyStreamEvent(streamEventCloner.copyStreamEvent(outputStreamEvent)));
-                        expiredEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
-                        if (outputStreamEventChunk.getFirst() != null) {
-                            streamEventChunks.add(outputStreamEventChunk);
-                        }
-                        events.add(clonedStreamEvent);
-
                     }
                 }
+                //retrieve the min/max event from treemap and add into outputstreameventchunk
+                StreamEvent tempEvent;
+                tempEvent = maxByMinByExecutor.getResult(minByMaxByExecutorType);
+                if (!(tempEvent.equals(outputStreamEvent))) {
+                    this.outputStreamEvent = streamEventCloner.copyStreamEvent(tempEvent);
+                    if (expiredEvent != null) {
+                        if (outputStreamEvent != expiredEvent) {
+                            expiredEvent.setTimestamp(currentTime);
+                            expiredEvent.setType(StateEvent.Type.EXPIRED);
+                            outputStreamEventChunk.add(expiredEvent);
+                        }
+
+                    }
+                    outputStreamEventChunk.add(streamEventCloner.copyStreamEvent(outputStreamEvent));
+                    expiredEventChunk.add(streamEventCloner.copyStreamEvent(streamEventCloner.copyStreamEvent(outputStreamEvent)));
+                    expiredEvent = streamEventCloner.copyStreamEvent(outputStreamEvent);
+                    if (outputStreamEventChunk.getFirst() != null) {
+                        streamEventChunks.add(outputStreamEventChunk);
+                    }
+                }
+                events.add(clonedStreamEvent);
             }
         }
 
-        System.out.println(outputStreamEventChunk);
         for (ComplexEventChunk<StreamEvent> outputStreamEventChunk : streamEventChunks) {
             nextProcessor.process(outputStreamEventChunk);
         }

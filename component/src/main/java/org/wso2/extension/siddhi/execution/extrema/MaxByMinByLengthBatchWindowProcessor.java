@@ -95,7 +95,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
 
         if (attributeExpressionExecutors.length != 2) {
             throw new ExecutionPlanValidationException(
-                    "Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " window, "
+                    "Invalid no of arguments passed to minbymaxby:" + minByMaxByExecutorType + " length batch window, "
                             + "required 2, but found " + attributeExpressionExecutors.length);
         }
 
@@ -107,7 +107,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
                     == Attribute.Type.STRING))) {
                 throw new ExecutionPlanValidationException(
                         "Invalid parameter type found for the first argument of minbymaxby:" + minByMaxByExecutorType
-                                + " window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
+                                + " length batch window, " + "required " + Attribute.Type.INT + " or " + Attribute.Type.LONG + " or "
                                 + Attribute.Type.FLOAT + " or " + Attribute.Type.DOUBLE + "or" + Attribute.Type.STRING
                                 + ", but found " + attributeType.toString());
             }
@@ -122,7 +122,7 @@ public abstract class MaxByMinByLengthBatchWindowProcessor extends WindowProcess
             if (!(((attributeType == Attribute.Type.INT)))) {
                 throw new ExecutionPlanValidationException(
                         "Invalid parameter type found for the second argument of minbymaxby:" + minByMaxByExecutorType
-                                + " window, " + "required " + Attribute.Type.INT +
+                                + " length batch window, " + "required " + Attribute.Type.INT +
                                 ", but found " + attributeType.toString() + " or second argument is not a constant");
             }
         } else {
